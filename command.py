@@ -1,6 +1,8 @@
 import csv
 import json
 from pathlib import Path
+import requests
+from bs4 import BeautifulSoup
 
 
 class CommandHandler:
@@ -9,14 +11,27 @@ class CommandHandler:
         self.running = True
 
     def handle_command(self, user_input: str) -> [str,str]:
-        """处理用户指令"""
         if user_input.startswith('/exit'):
             self.running = False
             return "正在退出程序...", ""
         elif user_input.startswith('/file'):
             return self.process_file(user_input)
+        elif user_input.startswith('/fetch'):  # 新增网页获取指令
+            return self.process_fetch(user_input)
         else:
             return f"未知指令: {user_input.split()[0]}", ""
+
+    @staticmethod
+    def process_fetch(command: str) -> [str, str]:
+        """处理网页获取指令"""
+        try:
+            _, url = command.split(maxsplit=1)
+            url = url.strip()
+            return f"已获取网页内容：{url}", f"[网页内容摘要]: {fetch_web_content(url)}"
+        except ValueError:
+            return "URL参数缺失", ""
+        except Exception as e:
+            return f"网页获取失败: {str(e)}", ""
 
     @staticmethod
     def process_file(command: str) -> [str, str]:
@@ -28,6 +43,55 @@ class CommandHandler:
             return "文件路径参数缺失", ""
         except Exception as e:
             return f"文件处理失败: {str(e)}", ""
+
+
+def fetch_web_content(url: str, timeout: int = 10) -> str:
+    """获取并解析网页内容"""
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+
+        # 带流式传输的请求以防止大文件
+        with requests.get(url, headers=headers, timeout=timeout, stream=True) as response:
+            response.raise_for_status()
+
+            # 检测编码
+            if response.encoding is None:
+                response.encoding = 'utf-8'
+
+            # 读取部分内容进行解析
+            content = []
+            for chunk in response.iter_content(decode_unicode=True, chunk_size=1024):
+                if chunk:
+                    content.append(chunk)
+                if len(content) > 20:  # 限制读取20个chunk（约20KB）
+                    break
+
+            text = ''.join(content)
+
+            # 使用BeautifulSoup提取主要内容
+            soup = BeautifulSoup(text, 'html.parser')
+
+            # 移除不需要的元素
+            for element in soup(['script', 'style', 'nav', 'footer', 'header', 'meta']):
+                element.decompose()
+
+            # 提取文本内容
+            content = []
+            for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'article']):
+                content.append(tag.get_text(strip=True, separator=' '))
+
+            # 合并并限制输出长度
+            full_text = '\n'.join(content)
+            return full_text[:5000] + "..." if len(full_text) > 5000 else full_text
+
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"网络请求失败: {str(e)}")
+    except ImportError:
+        raise ImportError("需要安装依赖库：requests和beautifulsoup4，请执行 `pip install requests beautifulsoup4`")
+    except Exception as e:
+        raise RuntimeError(f"内容解析失败: {str(e)}")
 
 
 def read_file_content(filepath: str) -> str:
