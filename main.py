@@ -1,7 +1,7 @@
 import time
 from pathlib import Path
 from ollama import chat
-from command import CommandHandler
+from command.commands import CommandHandler
 
 def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md"):
     """实时将流式响应写入Markdown文件"""
@@ -9,17 +9,17 @@ def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md
     try:
         with md_file.open('a', encoding='utf-8') as f:
             timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-            f.write(f"\n\n## 对话记录 - {timestamp}\n")
-            f.write(f"**用户输入**: {user_input}\n**AI回复**: ")
+            # f.write(f"\n\n## 对话记录 - {timestamp}\n")
+            # f.write(f"**用户输入**: {user_input}\n**AI回复**: ")
 
             full_response = []
             for chunk in stream:
                 content = chunk.message.content
                 print(content, end='', flush=True)
-                f.write(content)
-                f.flush()
+                # f.write(content)
+                # f.flush()
                 full_response.append(content)
-            f.write("\n")
+            # f.write("\n")
             return ''.join(full_response)
     except Exception as e:
         print(f"\n文件写入错误: {str(e)}")
@@ -32,7 +32,7 @@ def main():
 
     while cmd_handler.running:
         try:
-            user_input = input("\n请输入内容（输入/exit退出）: ").strip()
+            user_input = input("\n请输入内容（输入/help查看指令）: ").strip()
             if not user_input:
                 continue
 
