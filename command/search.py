@@ -1,13 +1,10 @@
 # 在原有导入基础上添加
-import os
 
 from typing import List, Tuple
 
-import requests
-from bs4 import BeautifulSoup
-
-from core.cache import CatchInformation, Cache, SearchResult
+from core.cache import Cache, SearchResult
 from .commands import registry, Command, CommandContext
+
 
 @registry.register(
     path="/search",

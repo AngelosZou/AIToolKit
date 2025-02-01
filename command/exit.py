@@ -1,5 +1,6 @@
 from typing import List, Tuple
 
+from core.cache import Cache
 from .commands import registry, Command, CommandContext
 
 
@@ -10,4 +11,5 @@ from .commands import registry, Command, CommandContext
 class ExitCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
         context['running'] = False
+        Cache.get_instance().save()
         return "正在退出程序...", ""

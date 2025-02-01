@@ -5,7 +5,9 @@ import ollama
 import core.cache
 from command.commands import CommandHandler
 from core import cache
-from core.cache import Cache
+from core.cache import Cache, GlobalFlag
+from tool.excutor import process_model_output
+from util.fomatter import delete_think
 
 
 def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md"):
@@ -46,36 +48,56 @@ def main():
     else:
         print(f"\n当前模型：{cache_data.active_model}")
 
+    message: [dict] = []
+
     history: str = ""
+
+    # 加载提示词
+    path = Path("./resource/prompt/tools.txt")
+    prompt = path.read_text(encoding='utf-8')
+    history += prompt + "\n\n"
+    message.append({'role': 'system', 'content': prompt})
+    path = Path("./resource/prompt/restrict.txt")
+    prompt = path.read_text(encoding='utf-8')
+    history += prompt + "\n\n"
+    message.append({'role': 'system', 'content': prompt})
 
     already_warn_cache = False # 是否已经提醒过缓存未提交
 
     while cmd_handler.running:
         try:
-            user_input = input("\n请输入内容（输入/help查看指令）: ").strip()
-            if not user_input:
-                continue
+            if not GlobalFlag.get_instance().skip_user_input:
+                user_input = input("\n请输入内容（输入/help查看指令）: ").strip()
+                if not user_input:
+                    continue
 
-            # 处理指令
-            if user_input.startswith('/'):
-                [for_user, for_model] = cmd_handler.handle_command(user_input)
-                history += for_model
-                print(f"\n[系统提示] {for_user}")
-                continue
+                # 处理指令
+                if user_input.startswith('/'):
+                    [for_user, for_model] = cmd_handler.handle_command(user_input)
+                    history += for_model
+                    if len(for_model) != 0:
+                        message.append({'role': 'system', 'content': for_model})
+                    print(f"\n[系统提示] {for_user}")
+                    continue
 
 
-            if not already_warn_cache and len(cache.CatchInformation.get_instance().info)!=0:
-                print("\n[系统提示] 请注意，缓存中有未提交的信息，请使用/submit提交给AI，再次输入交流将强制交互主AI并忽视缓存")
-                already_warn_cache = True
-                continue
-            already_warn_cache = False
+                if not already_warn_cache and len(cache.CatchInformation.get_instance().info)!=0:
+                    print("\n[系统提示] 请注意，缓存中有未提交的信息，请使用/submit提交给AI，再次输入交流将强制交互主AI并忽视缓存")
+                    already_warn_cache = True
+                    continue
+                already_warn_cache = False
 
-            history += f"\n[用户输入] {user_input}\n"
+                history += f"\n[用户输入] {user_input}\n"
+                message.append({'role': 'user', 'content': user_input})
+                # ------------------------------
+                # ↑ 用户输入处理结束
+                # ------------------------------
+            GlobalFlag.get_instance().skip_user_input = False
 
             # 处理普通对话
             stream = chat(
                 model=Cache.get_instance().active_model,
-                messages=[{'role': 'user', 'content': history}],
+                messages=message,
                 stream=True
             )
 
@@ -83,9 +105,15 @@ def main():
             full_response = write_stream_to_md(user_input, stream)
 
             history += f"\n[AI回复] {full_response}\n"
+            message.append({'role': 'assistant', 'content': delete_think(full_response)})
 
-            if full_response:
-                print("\n\n对话已实时保存")
+            # 处理AI使用工具
+            result = process_model_output(full_response)
+            print(result["user_message"])
+            history += f"\n[工具使用反馈] {result['model_feedback']}\n"
+            if len(result['model_feedback']) != 0:
+                message.append({'role': 'system', 'content': result['model_feedback']})
+
 
         except KeyboardInterrupt:
             print("\n检测到中断信号，正在退出...")

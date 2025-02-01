@@ -67,3 +67,17 @@ class SearchResult:
         if cls.instance is None:
             cls.instance = cls()
         return cls.instance
+
+
+class GlobalFlag:
+    """用于全局标志位"""
+    instance = None
+
+    def __init__(self):
+        self.skip_user_input = False
+
+    @classmethod
+    def get_instance(cls):
+        if cls.instance is None:
+            cls.instance = cls()
+        return cls.instance
