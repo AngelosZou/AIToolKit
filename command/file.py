@@ -2,6 +2,7 @@ import csv
 import json
 from pathlib import Path
 from typing import List, Tuple
+from core.cache import CatchInformation
 
 from .commands import registry, Command, CommandContext
 
@@ -19,7 +20,8 @@ class FileCommand(Command):
         filepath = args[0].strip()
         try:
             content = read_file_content(filepath)
-            return f"读取到了本地文件 {filepath}", f"[解析内容]: {content}"
+            CatchInformation.get_instance().info = f"读取到了本地文件 {filepath} 的完整内容：{content}"
+            return f"读取到了本地文件 {filepath}， 使用/summary总结关键信息或者使用/submit将内容提交给AI", ""
         except Exception as e:
             return f"文件处理失败: {str(e)}", ""
 

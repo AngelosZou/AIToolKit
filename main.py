@@ -4,6 +4,7 @@ from ollama import chat
 import ollama
 import core.cache
 from command.commands import CommandHandler
+from core import cache
 from core.cache import Cache
 
 
@@ -17,12 +18,16 @@ def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md
             # f.write(f"**用户输入**: {user_input}\n**AI回复**: ")
 
             full_response = []
-            for chunk in stream:
-                content = chunk.message.content
-                print(content, end='', flush=True)
-                # f.write(content)
-                # f.flush()
-                full_response.append(content)
+            try:
+                for chunk in stream:
+                    content = chunk.message.content
+                    print(content, end='', flush=True)
+                    # f.write(content)
+                    # f.flush()
+                    full_response.append(content)
+            except KeyboardInterrupt:
+                print("\n检测到中断信号，打断模型输出，抛弃未完成的信息")
+                return ""
             # f.write("\n")
             return ''.join(full_response)
     except Exception as e:
@@ -43,6 +48,8 @@ def main():
 
     history: str = ""
 
+    already_warn_cache = False # 是否已经提醒过缓存未提交
+
     while cmd_handler.running:
         try:
             user_input = input("\n请输入内容（输入/help查看指令）: ").strip()
@@ -55,6 +62,13 @@ def main():
                 history += for_model
                 print(f"\n[系统提示] {for_user}")
                 continue
+
+
+            if not already_warn_cache and len(cache.CatchInformation.get_instance().info)!=0:
+                print("\n[系统提示] 请注意，缓存中有未提交的信息，请使用/submit提交给AI，再次输入交流将强制交互主AI并忽视缓存")
+                already_warn_cache = True
+                continue
+            already_warn_cache = False
 
             history += f"\n[用户输入] {user_input}\n"
 

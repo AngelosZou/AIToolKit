@@ -3,6 +3,7 @@ from typing import List, Tuple
 import requests
 from bs4 import BeautifulSoup
 
+from core.cache import CatchInformation
 from .commands import registry, Command, CommandContext
 
 
@@ -19,7 +20,8 @@ class FetchCommand(Command):
         url = args[0].strip()
         try:
             content = fetch_web_content(url)
-            return f"已获取网页内容：{url}", f"[网页摘要]: {content}"
+            CatchInformation.get_instance().info = f"读取到了网页链接 {url} 的完整内容：{content}"
+            return f"已获取网页内容：{url}， 使用/summary总结关键信息或者使用/submit将内容提交给AI", ""
         except Exception as e:
             return f"网页获取失败: {str(e)}", ""
 

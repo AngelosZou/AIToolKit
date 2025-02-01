@@ -34,3 +34,18 @@ def save_cache(cache_data: Cache):
     """保存缓存数据到文件"""
     with open("cache.json", "w", encoding="utf-8") as f:
         json.dump(cache_data.__dict__, f, ensure_ascii=False, indent=2)
+
+
+
+class CatchInformation:
+    """用于缓存捕捉到的信息"""
+    instance = None
+
+    def __init__(self):
+        self.info = ""
+
+    @classmethod
+    def get_instance(cls):
+        if cls.instance is None:
+            cls.instance = cls()
+        return cls.instance

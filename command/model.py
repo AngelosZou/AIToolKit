@@ -15,7 +15,7 @@ class ModelCommand(Command):
 
 @registry.register(
     path="/model/set",
-    description="设置当前启用模型(重启生效)"
+    description="设置当前启用模型"
 )
 class ModelChangeCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
