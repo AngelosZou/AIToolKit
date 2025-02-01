@@ -3,27 +3,45 @@ from typing import List, Tuple
 import requests
 from bs4 import BeautifulSoup
 
-from core.cache import CatchInformation
+from core.cache import CatchInformation, SearchResult
 from .commands import registry, Command, CommandContext
 
 
 @registry.register(
     path="/fetch",
-    description="网页内容获取",
-    usage="/fetch <URL>"
+    description="获取网页内容",
+    usage="/fetch <URL或搜索序号>"
 )
 class FetchCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
         if not args:
-            return "URL参数缺失", ""
+            return "请输入URL或搜索序号", ""
 
-        url = args[0].strip()
+        input_arg = args[0].strip()
+        res = SearchResult.get_instance()
+        cache = CatchInformation.get_instance()
+
+        # 处理数字输入（搜索序号）
+        if input_arg.isdigit():
+            index = int(input_arg) - 1
+            if index < 0 or index >= len(res.search_results):
+                return "无效的序号，请先进行搜索", ""
+            url = res.search_results[index]['link']
+        else:
+            url = input_arg
+
         try:
             content = fetch_web_content(url)
-            CatchInformation.get_instance().info = f"读取到了网页链接 {url} 的完整内容：{content}"
-            return f"已获取网页内容：{url}， 使用/summary总结关键信息或者使用/submit将内容提交给AI", ""
+            # 更新缓存信息
+            res.url = url
+            cache.info = content
+            return (
+                f"成功获取网页内容：{url}\n"
+                "使用/summary 总结内容或/submit 提交给AI处理",
+                ""
+            )
         except Exception as e:
-            return f"网页获取失败: {str(e)}", ""
+            return f"网页获取失败：{str(e)}", ""
 
 
 def fetch_web_content(url: str, timeout: int = 10) -> str:
