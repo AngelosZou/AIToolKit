@@ -1,0 +1,9 @@
+{
+  "active_model": {
+    "Ollama": "deepseek-r1:14b"
+  },
+  "google_api_key": "",
+  "google_cse_id": "",
+  "active_ai": "Ollama",
+  "openai_api_key": ""
+}
