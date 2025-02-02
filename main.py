@@ -3,8 +3,6 @@ from pathlib import Path
 
 from ollama import chat
 import ollama
-from openai import api_key
-from six import print_
 
 import core.cache
 from command.commands import CommandHandler
