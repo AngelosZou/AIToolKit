@@ -1,14 +1,14 @@
 # 用于将缓存数据写入json文件保存或从json数据中读取数据
 import json
 
-AVAILABLE_AI = ["OpenAI_API", "Ollama", "DeepSeek_API"]
+AVAILABLE_AI = ["OpenAI_API", "Ollama", "DeepSeek_API", "SiliconFlow"]
 
 
 class Configure:
     instance = None
 
     def __init__(self, active_model: dict = None, google_api_key: str = "", google_cse_id: str = "",
-                 active_ai: AVAILABLE_AI = None, openai_api_key: str = ""):
+                 active_ai: AVAILABLE_AI = None, openai_api_key: str = "", siliconflow_api_key: str = ""):
         if active_model is None:
             active_model = {}
         self.active_model = active_model
@@ -16,6 +16,7 @@ class Configure:
         self.google_cse_id = google_cse_id
         self.active_ai: AVAILABLE_AI = active_ai
         self.openai_api_key = openai_api_key
+        self.siliconflow_api_key = siliconflow_api_key
 
     def save(self):
         save_cache(self)

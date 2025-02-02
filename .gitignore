@@ -1,0 +1,12 @@
+__pycache__/
+
+.idea/
+
+conversation.md
+
+*.pdf
+*.md
+*.csv
+*.json
+
+test.py
