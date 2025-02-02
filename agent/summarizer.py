@@ -14,20 +14,6 @@ def process(content: str, send_to_cache: bool = False) -> str:
     print("总结子系统启动")
     # TODO: 为总结添加专用模型
     full_response = communicate([{'role': 'user', 'content': prompt + content}])
-    # stream = chat(
-    #     model=Configure.get_instance().active_model[Configure.get_instance().active_ai],
-    #     messages=[{'role': 'user', 'content': prompt + content}],
-    #     stream=True
-    # )
-    #
-    # print("\n总结信息: ", end='', flush=True)
-    #
-    # full_response = []
-    #
-    # for chunk in stream:
-    #     content = chunk.message.content
-    #     print(content, end='', flush=True)
-    #     full_response.append(content)
 
     res = formatter.delete_think(''.join(full_response))
 

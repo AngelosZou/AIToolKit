@@ -1,6 +1,8 @@
 import time
 from pathlib import Path
 
+from colorama import Fore, Style
+
 import core.cache
 from command.commands import CommandHandler
 from core import cache
@@ -104,7 +106,9 @@ def main():
     while cmd_handler.running:
         try:
             if not GlobalFlag.get_instance().skip_user_input:
-                user_input = input("\n请输入内容（输入/help查看指令）: ").strip()
+                print(f"{Fore.RED}------------------------------------------------------{Style.RESET_ALL}")
+
+                user_input = input("请输入内容（输入/help查看指令）: ").strip()
                 if not user_input:
                     continue
 
