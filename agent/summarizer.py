@@ -2,7 +2,7 @@
 from ollama import chat
 from pathlib import Path
 
-from core.cache import Cache, CatchInformation
+from core.cache import Configure, CatchInformation
 import util.fomatter as formatter
 
 
@@ -11,8 +11,9 @@ def process(content: str, send_to_cache: bool = False) -> str:
     prompt = path.read_text(encoding='utf-8')
 
     print("总结子系统启动")
+    # TODO: 为总结添加专用模型
     stream = chat(
-        model=Cache.get_instance().active_model,
+        model=Configure.get_instance().active_model["Ollama"],
         messages=[{'role': 'user', 'content': prompt + content}],
         stream=True
     )

@@ -2,7 +2,7 @@
 
 from typing import List, Tuple
 
-from core.cache import Cache, SearchResult
+from core.cache import Configure, SearchResult
 from .commands import registry, Command, CommandContext
 
 
@@ -22,8 +22,8 @@ class SearchCommand(Command):
             return "请安装google-api-python-client库以使用搜索功能", ""
 
         query = ' '.join(args)
-        api_key = Cache.get_instance().google_api_key
-        cse_id = Cache.get_instance().google_cse_id
+        api_key = Configure.get_instance().google_api_key
+        cse_id = Configure.get_instance().google_cse_id
 
         if not api_key or not cse_id:
             return "搜索功能未配置，请联系管理员设置API密钥。", ""

@@ -1,17 +1,21 @@
 # 用于将缓存数据写入json文件保存或从json数据中读取数据
 import json
 
+AVAILABLE_AI = ["OpenAI_API", "Ollama", "DeepSeek_API"]
 
-class Cache:
+
+class Configure:
     instance = None
 
-    def __init__(self, models: list = None, active_model: str = None, google_api_key: str = "", google_cse_id: str = ""):
-        if models is None:
-            models = []
-        self.models = models
+    def __init__(self, active_model: dict = None, google_api_key: str = "", google_cse_id: str = "",
+                 active_ai: AVAILABLE_AI = None, openai_api_key: str = ""):
+        if active_model is None:
+            active_model = {}
         self.active_model = active_model
         self.google_api_key = google_api_key
         self.google_cse_id = google_cse_id
+        self.active_ai: AVAILABLE_AI = active_ai
+        self.openai_api_key = openai_api_key
 
     def save(self):
         save_cache(self)
@@ -22,21 +26,22 @@ class Cache:
             cls.instance = load_cache()
         return cls.instance
 
-def load_cache()-> Cache:
+
+def load_cache() -> Configure:
     """从文件加载缓存数据"""
     try:
         with open("cache.json", "r", encoding="utf-8") as f:
             cache_data = json.load(f)
-            return Cache(**cache_data)
+            return Configure(**cache_data)
     except Exception:
         cache_data = {}
-    return Cache(**cache_data)
+    return Configure(**cache_data)
 
-def save_cache(cache_data: Cache):
+
+def save_cache(cache_data: Configure):
     """保存缓存数据到文件"""
     with open("cache.json", "w", encoding="utf-8") as f:
         json.dump(cache_data.__dict__, f, ensure_ascii=False, indent=2)
-
 
 
 class CatchInformation:

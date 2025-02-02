@@ -3,11 +3,11 @@ from typing import List, Tuple
 import ollama
 
 from .commands import registry, Command, CommandContext
-from core.cache import Cache
+from core.cache import Configure
 
 @registry.register(
-    path="/model/list",
-    description="检查可用模型"
+    path="/model/ollama/list",
+    description="检查本地可用的ollama模型"
 )
 class ModelCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
@@ -15,11 +15,15 @@ class ModelCommand(Command):
 
 @registry.register(
     path="/model/set",
-    description="设置当前启用模型"
+    description="为当前启用的AI源选择启用的模型"
 )
 class ModelChangeCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
         if not args:
             return "模型参数缺失", ""
-        Cache.get_instance().active_model = args[0]
-        return f"已修改为模型 {args[0]}", ""
+        configure = Configure.get_instance()
+        ai_source = configure.active_ai
+        if ai_source is None:
+            return "未选择AI加载器来源，使用/ai set 设置", ""
+        configure.active_model[ai_source] = args[0]
+        return f"已修改 {ai_source} 的模型为 {args[0]}", ""
