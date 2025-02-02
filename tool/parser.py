@@ -18,7 +18,7 @@ class ToolParser:
             tools.append(('fetch', match.group(1).strip()))
 
         # 解析总结工具
-        if re.search(r'<summary>\s*</summary>', content):
+        if re.search(r'<summary>', content):
             tools.append(('summary', ''))
 
         return tools
