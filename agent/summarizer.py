@@ -4,6 +4,7 @@ from pathlib import Path
 
 from core.cache import Configure, CatchInformation
 import util.fomatter as formatter
+from main import communicate
 
 
 def process(content: str, send_to_cache: bool = False) -> str:
@@ -12,20 +13,21 @@ def process(content: str, send_to_cache: bool = False) -> str:
 
     print("总结子系统启动")
     # TODO: 为总结添加专用模型
-    stream = chat(
-        model=Configure.get_instance().active_model["Ollama"],
-        messages=[{'role': 'user', 'content': prompt + content}],
-        stream=True
-    )
-
-    print("\n总结信息: ", end='', flush=True)
-
-    full_response = []
-
-    for chunk in stream:
-        content = chunk.message.content
-        print(content, end='', flush=True)
-        full_response.append(content)
+    full_response = communicate([{'role': 'user', 'content': prompt + content}])
+    # stream = chat(
+    #     model=Configure.get_instance().active_model[Configure.get_instance().active_ai],
+    #     messages=[{'role': 'user', 'content': prompt + content}],
+    #     stream=True
+    # )
+    #
+    # print("\n总结信息: ", end='', flush=True)
+    #
+    # full_response = []
+    #
+    # for chunk in stream:
+    #     content = chunk.message.content
+    #     print(content, end='', flush=True)
+    #     full_response.append(content)
 
     res = formatter.delete_think(''.join(full_response))
 

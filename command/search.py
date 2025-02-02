@@ -26,11 +26,11 @@ class SearchCommand(Command):
         cse_id = Configure.get_instance().google_cse_id
 
         if not api_key or not cse_id:
-            return "搜索功能未配置，请联系管理员设置API密钥。", ""
+            return "搜索功能未配置，请设置API密钥。", ""
 
         try:
             service = build("customsearch", "v1", developerKey=api_key)
-            result = service.cse().list(q=query, cx=cse_id, num=5).execute()
+            result = service.cse().list(q=query, cx=cse_id, num=10).execute()
             items = result.get('items', [])
 
             if not items:

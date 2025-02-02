@@ -1,3 +1,17 @@
 # IDE folder
 .idea/
 cache.json
+
+# python
+__pycache__/
+
+conversation.md
+
+# local files
+*.pdf
+*.md
+*.csv
+*.json
+
+# test
+test.py

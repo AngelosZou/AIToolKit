@@ -37,4 +37,14 @@ class OpenAIAPICommand(Command):
         Configure.get_instance().openai_api_key = args[0]
         return "已更新OpenAI模型API", ""
 
+@registry.register(
+    path="/api/siliconflow",
+    description="设置SiliconFlow模型使用API"
+)
+class OpenAIAPICommand(Command):
+    def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
+        if not args:
+            return "请提供API", ""
+        Configure.get_instance().siliconflow_api_key = args[0]
+        return "已更新SiliconFlow模型API", ""
 
