@@ -53,6 +53,7 @@ def communicate(message, user_input = "") -> str:
         for i in range(len(message)):
             if message[i]['role'] == 'system':
                 message[i]['role'] = 'user'
+                message[i]['content'] = "[系统消息] !该内容由系统根据流程生成! "+message[i]['content'] + "[系统消息结束]"
 
         stream = client.chat.completions.create(
             model=configure.active_model[configure.active_ai],

@@ -8,7 +8,8 @@ class Configure:
     instance = None
 
     def __init__(self, active_model: dict = None, google_api_key: str = "", google_cse_id: str = "",
-                 active_ai: AVAILABLE_AI = None, openai_api_key: str = "", siliconflow_api_key: str = ""):
+                 active_ai: AVAILABLE_AI = None, openai_api_key: str = "", siliconflow_api_key: str = "",
+                 max_skip_input_turn: int = -1):
         if active_model is None:
             active_model = {}
         self.active_model = active_model
@@ -17,6 +18,7 @@ class Configure:
         self.active_ai: AVAILABLE_AI = active_ai
         self.openai_api_key = openai_api_key
         self.siliconflow_api_key = siliconflow_api_key
+        self.max_skip_input_turn: int = max_skip_input_turn # 最大连续跳过用户输入轮次。超过此轮次将强制停止AI控制。为-1时不限制
 
     def save(self):
         save_cache(self)

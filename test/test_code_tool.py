@@ -5,8 +5,7 @@ import io
 import shutil
 from pathlib import Path
 
-from tool.excutor import ToolExecutor
-from tool.parser import ToolParser
+
 
 
 class TestToolExecutorRealFiles(unittest.TestCase):

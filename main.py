@@ -8,7 +8,7 @@ from command.file import read_file_content
 from core import cache
 from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
-from tool.excutor import process_model_output
+from tool.base_tool import process_model_output
 from util.fomatter import delete_think
 
 
@@ -74,16 +74,21 @@ def main():
 
     # 遍历 ./ref_space/ 文件夹下的所有文件
     file_count = 0
-    for file in Path("./ref_space/").iterdir():
-        if file.is_file():
-            # 使用file.read_file_content(file)读取文件内容
-            message.append({'role': 'system', 'content': f"读取到了本地文件 {read_file_content(file)}"})
-            file_count += 1
-    print(f"\n从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI")
+    if Path("./ref_space/").exists():
+        for file in Path("./ref_space/").iterdir():
+            if file.is_file():
+                # 使用file.read_file_content(file)读取文件内容
+                message.append({'role': 'system', 'content': f"读取到了本地文件 {read_file_content(file)}"})
+                file_count += 1
+        if file_count != 0:
+            print(f"\n从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI")
+        else:
+            print(f"\n未在 ./ref_space/ 中读取到本地文件")
 
+    skip_count = 0
     while cmd_handler.running:
         try:
-            if not GlobalFlag.get_instance().skip_user_input:
+            if not GlobalFlag.get_instance().skip_user_input or skip_count >= configure.max_skip_input_turn:
                 print(f"{Fore.RED}------------------------------------------------------{Style.RESET_ALL}")
 
                 user_input = input("请输入内容（输入/help查看指令）: ").strip()
@@ -109,6 +114,10 @@ def main():
                 # ------------------------------
                 # ↑ 用户输入处理结束
                 # ------------------------------
+            else:
+                skip_count += 1
+                if skip_count > int(Configure.get_instance().max_skip_input_turn/2):
+                    message.append({'role': 'user', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
