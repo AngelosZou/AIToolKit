@@ -1,5 +1,6 @@
 __pycache__/
-./code_space/*
+code_space/*
+ref_space/*
 
 .idea/
 

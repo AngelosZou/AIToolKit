@@ -4,6 +4,7 @@ from colorama import Fore, Style
 
 import core.cache
 from command.commands import CommandHandler
+from command.file import read_file_content
 from core import cache
 from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
@@ -70,6 +71,15 @@ def main():
     message.append({'role': 'system', 'content': prompt})
 
     already_warn_cache = False # 是否已经提醒过缓存未提交
+
+    # 遍历 ./ref_space/ 文件夹下的所有文件
+    file_count = 0
+    for file in Path("./ref_space/").iterdir():
+        if file.is_file():
+            # 使用file.read_file_content(file)读取文件内容
+            message.append({'role': 'system', 'content': f"读取到了本地文件 {read_file_content(file)}"})
+            file_count += 1
+    print(f"\n从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI")
 
     while cmd_handler.running:
         try:
