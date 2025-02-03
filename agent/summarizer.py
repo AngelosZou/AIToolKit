@@ -1,10 +1,9 @@
 # 总结模型，用于总结一段内容
-from ollama import chat
 from pathlib import Path
 
-from core.cache import Configure, CatchInformation
 import util.fomatter as formatter
-from main import communicate
+from core.cache import CatchInformation
+from core.communicate import communicate
 
 
 def process(content: str, send_to_cache: bool = False) -> str:

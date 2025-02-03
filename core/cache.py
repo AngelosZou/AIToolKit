@@ -81,6 +81,7 @@ class GlobalFlag:
 
     def __init__(self):
         self.skip_user_input = False
+        self.fail_test = False
 
     @classmethod
     def get_instance(cls):
