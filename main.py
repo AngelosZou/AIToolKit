@@ -1,3 +1,5 @@
+import json
+import time
 from pathlib import Path
 
 from colorama import Fore, Style
@@ -8,6 +10,7 @@ from command.file import read_file_content
 from core import cache
 from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
+from core.history import save_history
 from tool.base_tool import process_model_output
 from util.fomatter import delete_think
 
@@ -16,6 +19,8 @@ def main():
     cmd_handler = CommandHandler()
 
     configure = core.cache.Configure.get_instance()
+
+    timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
 
     if configure.active_ai is None:
         print(f"\n未选择AI加载器来源")
@@ -60,8 +65,9 @@ def main():
             print("请安装openai库以使用API")
             print("pip install openai")
 
-
-    message: [dict] = []
+    communicate.message = []
+    message: [dict] = communicate.message
+    communicate.name = timestamp
 
     path = Path("./resource/prompt/tools.txt")
     prompt = path.read_text(encoding='utf-8')
@@ -138,6 +144,7 @@ def main():
             if len(result['model_feedback']) != 0:
                 message.append({'role': 'system', 'content': result['model_feedback']})
 
+            save_history(timestamp, message)
 
         except KeyboardInterrupt:
             print("\n检测到中断信号，正在退出...")
@@ -145,6 +152,9 @@ def main():
             cmd_handler.running = False
         except Exception as e:
             print(f"\n发生错误: {str(e)}")
+
+
+
 
 
 if __name__ == "__main__":

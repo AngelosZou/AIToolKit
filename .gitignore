@@ -1,6 +1,7 @@
 __pycache__/
 code_space/*
 ref_space/*
+history/*
 
 .idea/
 

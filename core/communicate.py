@@ -6,6 +6,11 @@ from colorama import Fore, Style
 from core.cache import Configure, GlobalFlag
 
 
+
+name:str
+message:list[dict]
+
+
 def communicate(message, user_input = "") -> str:
     configure = Configure.get_instance()
     # 检查模型
@@ -54,11 +59,13 @@ def communicate(message, user_input = "") -> str:
             if message[i]['role'] == 'system':
                 message[i]['role'] = 'user'
                 message[i]['content'] = "[系统消息] !该内容由系统根据流程生成! "+message[i]['content'] + "[系统消息结束]"
+                message[i]['system'] = True
 
         stream = client.chat.completions.create(
             model=configure.active_model[configure.active_ai],
             messages=message,
             stream=True,
+            max_tokens = 4096 * 2
         )
     else:
         print("AI加载器来源不可用")
