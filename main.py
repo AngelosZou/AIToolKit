@@ -88,7 +88,9 @@ def main():
     skip_count = 0
     while cmd_handler.running:
         try:
-            if not GlobalFlag.get_instance().skip_user_input or skip_count >= configure.max_skip_input_turn:
+            if (not GlobalFlag.get_instance().skip_user_input or
+                    (skip_count >= configure.max_skip_input_turn != -1)
+                or GlobalFlag.get_instance().force_stop):
                 print(f"{Fore.RED}------------------------------------------------------{Style.RESET_ALL}")
 
                 user_input = input("请输入内容（输入/help查看指令）: ").strip()
@@ -114,10 +116,12 @@ def main():
                 # ------------------------------
                 # ↑ 用户输入处理结束
                 # ------------------------------
+
+                GlobalFlag.get_instance().force_stop = False
             else:
                 skip_count += 1
                 if skip_count > int(Configure.get_instance().max_skip_input_turn/2):
-                    message.append({'role': 'user', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
+                    message.append({'role': 'system', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------

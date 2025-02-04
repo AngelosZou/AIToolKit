@@ -3,7 +3,7 @@ from pathlib import Path
 
 from colorama import Fore, Style
 
-from core.cache import Configure
+from core.cache import Configure, GlobalFlag
 
 
 def communicate(message, user_input = "") -> str:
@@ -99,6 +99,12 @@ def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md
                     print(content, end='', flush=True)
                     print(f"{Fore.LIGHTBLACK_EX}{think_content}{Style.RESET_ALL}", end='', flush=True)
                     full_response.append(content)
+                    # 如果最近的5段content组合中存在 <wait>, <end>，则停止
+                    if len(full_response) >= 5:
+                        if "<wait>" in "".join(full_response[-5:]) or "<end>" in "".join(full_response[-5:]):
+                            if "<end>" in "".join(full_response[-5:]):
+                                GlobalFlag.get_instance().force_stop = True
+                            break
                     full_think.append(think_content)
                 # 处理full_think
                 full_think = "".join(full_think)
@@ -106,8 +112,8 @@ def write_stream_to_md(user_input: str, stream, filename: str = "conversation.md
                     full_think = "<think>\n" + full_think + "\n</think>"
                 full_response = full_think + ''.join(full_response)
                 f.write(full_response)
-                print(f"耗时{time.time()-start_time:.2f}秒")
-                print(f"\n{Fore.BLUE}------------------------------------------------------{Style.RESET_ALL}")
+                print(f"{Fore.BLUE}\n耗时{time.time()-start_time:.2f}秒\n--------------------"
+                      f"----------------------------------{Style.RESET_ALL}")
             except KeyboardInterrupt:
                 print("\n检测到中断信号，打断模型输出，抛弃未完成的信息")
                 f.write(full_response+"\t 输出中断。")
