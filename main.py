@@ -133,7 +133,7 @@ def main():
             # ------------------------------
             # 调用AI
             # ------------------------------
-            full_response = communicate(message, user_input)
+            full_response = communicate(message)
             # ------------------------------
 
             message.append({'role': 'assistant', 'content': delete_think(full_response)})

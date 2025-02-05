@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from core.cache import Configure, AVAILABLE_AI, CatchInformation
+from core.cache import Configure, CatchInformation
 from .commands import registry, Command, CommandContext
 
 

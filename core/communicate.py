@@ -1,82 +1,55 @@
 import time
+from copy import copy
 from pathlib import Path
 
 from colorama import Fore, Style
 
 from core.cache import Configure, GlobalFlag
-
-
+from core.source.sources import SourceRegistry, BaseSource
 
 name:str
 message:list[dict]
 
 
-def communicate(message, user_input = "") -> str:
+def communicate(message) -> str:
     configure = Configure.get_instance()
     # 检查模型
     if Configure.get_instance().active_model is None:
         print("使用/model set <模型名>来设置模型")
         return ""
 
+    # 检查模型可用性
+    if configure.active_ai not in configure.active_model:
+        print(f"未设置AI源 {configure.active_ai} 对应的模型")
+        print("使用 /model set <模型> 进行设置")
+        return ""
+    source_cls: BaseSource.__class__ = SourceRegistry.sources[configure.active_ai]
+    if not source_cls.is_available:
+        return ""
+
     # ------------------------------
     # 调用模型
     # ------------------------------
-    if configure.active_ai == "Ollama":
-        try:
-            import ollama
-            from ollama import chat
-        except ImportError:
-            print("请安装ollama库以使用Ollama模型")
-            print("pip install ollama")
-            return ""
-        stream = chat(
-            model=Configure.get_instance().active_model["Ollama"],
-            messages=message,
-            stream=True
-        )
 
-    elif configure.active_ai in ["OpenAI_API", "SiliconFlow"]:
-        try:
-            from openai import OpenAI
-        except ImportError:
-            print("请安装openai库以使用OpenAI模型")
-            print("pip install openai")
-            return ""
+    # 替换message中的所有system为user以匹配模型的输入
+    # 去除所有非开头的system
+    flag = False
+    for i in range(len(message)):
+        if message[i]['role'] != 'system':
+            flag = True
+        if message[i]['role'] == 'system' and flag:
+            message[i]['role'] = 'user'
+            message[i]['content'] = "[系统消息] !该内容由系统根据流程生成! "+message[i]['content'] + "[系统消息结束]"
+            message[i]['system'] = True
 
-        url = ""
-        api = ""
-        if configure.active_ai == "OpenAI_API":
-            api = configure.openai_api_key
-            url = "https://api.openai.com/v1"
-        elif configure.active_ai == "SiliconFlow":
-            api = configure.siliconflow_api_key
-            url = "https://api.siliconflow.com/v1"
-        client = OpenAI(api_key=api, base_url=url)
-
-        # 替换message中的所有system为user以匹配模型的输入
-        # if configure.active_ai == "OpenAI_API":
-        for i in range(len(message)):
-            if message[i]['role'] == 'system':
-                message[i]['role'] = 'user'
-                message[i]['content'] = "[系统消息] !该内容由系统根据流程生成! "+message[i]['content'] + "[系统消息结束]"
-                message[i]['system'] = True
-
-        stream = client.chat.completions.create(
-            model=configure.active_model[configure.active_ai],
-            messages=message,
-            stream=True,
-            max_tokens = 8192
-        )
-    else:
-        print("AI加载器来源不可用")
-        return ""
+    stream = source_cls.create_stream(copy(message))
 
     print("\nAI回复: ", end='', flush=True)
-    full_response = write_stream_to_md(user_input, stream)
+    full_response = process_stream(stream, source_cls)
     return full_response
 
 
-def write_stream_to_md(user_input: str, stream):
+def process_stream(stream, source_cls: BaseSource.__class__):
     """实时将流式响应写入Markdown文件"""
     try:
         start_time = time.time()
@@ -85,20 +58,11 @@ def write_stream_to_md(user_input: str, stream):
         full_think = []
         try:
             for chunk in stream:
-                content = ""
-                think_content = ""
-                if Configure.get_instance().active_ai == "Ollama":
-                    content = chunk.message.content
-                elif Configure.get_instance().active_ai == "OpenAI_API":
-                    if chunk.choices[0].delta.content is not None:
-                        content = chunk.choices[0].delta.content
-                elif Configure.get_instance().active_ai in [ "SiliconFlow", "DeepSeek_API"]:
-                    if chunk.choices[0].delta.content is not None:
-                        content = chunk.choices[0].delta.content
-                    if chunk.choices[0].delta.model_extra["reasoning_content"] is not None:
-                        think_content = chunk.choices[0].delta.model_extra["reasoning_content"]
-                print(content, end='', flush=True)
+                think_content, content = source_cls.catch_chunk_in_stream(chunk)
                 print(f"{Fore.LIGHTBLACK_EX}{think_content}{Style.RESET_ALL}", end='', flush=True)
+                if len(full_response) == 0 and len(content) != 0:
+                    print("\n\n")
+                print(content, end='', flush=True)
                 full_response.append(content)
                 # 如果最近的5段content组合中存在 <wait>, <end>，则停止
                 if len(full_response) >= 5:

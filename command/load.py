@@ -1,6 +1,5 @@
 from typing import List, Tuple
 
-from core.cache import Configure, AVAILABLE_AI
 from core.communicate import communicate
 from core.history import load_history
 from .commands import registry, Command, CommandContext

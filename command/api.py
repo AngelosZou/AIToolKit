@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from core.cache import Configure, AVAILABLE_AI
+from core.cache import Configure
 from .commands import registry, Command, CommandContext
 
 
@@ -41,10 +41,20 @@ class OpenAIAPICommand(Command):
     path="/api/siliconflow",
     description="设置SiliconFlow模型使用API"
 )
-class OpenAIAPICommand(Command):
+class SiliconAPICommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
         if not args:
             return "请提供API", ""
         Configure.get_instance().siliconflow_api_key = args[0]
         return "已更新SiliconFlow模型API", ""
 
+@registry.register(
+    path="/api/deepseek",
+    description="设置DeepSeek模型使用API"
+)
+class DeepSeekAPICommand(Command):
+    def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
+        if not args:
+            return "请提供API", ""
+        Configure.get_instance().deepseek_api_key = args[0]
+        return "已更新DeepSeek模型API", ""
