@@ -1,3 +1,4 @@
+import asyncio
 from typing import List, Dict, Any
 
 
@@ -18,6 +19,17 @@ class BaseSource:
     def catch_chunk_in_stream(cls, chunk)-> [str, str]:
         """从chunk中获取数据，第一个返回值为思考过程，第二个返回值为主要响应"""
         raise NotImplementedError
+
+    @classmethod
+    async def create_stream_async(cls, messages):
+        sync_gen = cls.create_stream(messages)  # 获取同步生成器
+        while True:
+            try:
+                # 将 next() 放到线程池执行，避免阻塞事件循环
+                chunk = await asyncio.to_thread(next, sync_gen)
+                yield chunk
+            except StopIteration:
+                break
 
 
 class SourceRegistry:

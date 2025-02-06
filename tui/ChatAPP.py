@@ -1,100 +1,37 @@
-import json
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
+import asyncio
 from pathlib import Path
 from typing import List
-from colorama import Fore, Style
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, VerticalScroll, ScrollableContainer
+from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import (
     Tree,
-    Label,
-    MarkdownViewer,
-    TextArea,
-    Button,
-    Input
+    Button
 )
-from textual.reactive import reactive
 
+import main
+from core.SurrogateIO import sio_print
+from tui.message import MsgType, ChatMessage, MessageDisplay
+from core.cache import GlobalFlag
 from core.history import History
+from core.sync.StateManager import StateManager, State
 from .widget.UserInput import UserInput
 
 
-# 消息类型定义
-class MsgType(Enum):
-    USER = ("user", "#E1FFFF")       # 用户消息
-    SYSTEM = ("system", "#FAFAD2")   # 系统消息
-    ASSISTANT = ("assistant", "#F5FFFA")  # 助手消息
+async def fake_main():
+    while True:
+        state_manager = StateManager.get_or_create()
+        await state_manager.wait_for_state(State.FINISH_INPUT)
+        # await asyncio.sleep(5)
+        await state_manager.set_state(State.WAITING_FOR_INPUT)
+        sio_print("Fake main running")
+        GlobalFlag.get_instance().is_communicating = True
+        sio_print("Fake main running")
+        await asyncio.sleep(5)
+        sio_print("Hello")
+        GlobalFlag.get_instance().is_communicating = False
 
-    @staticmethod
-    def from_role(role: str):
-        return {
-            "user": MsgType.USER,
-            "system": MsgType.SYSTEM,
-            "assistant": MsgType.ASSISTANT
-        }[role]
-
-    @property
-    def color(self):
-        return self.value[1]
-
-    @property
-    def role(self):
-        return self.value[0]
-
-@dataclass
-class ChatMessage:
-    content: str
-    type: MsgType
-    think: str = ""
-
-
-# 消息显示组件
-class MessageDisplay(VerticalScroll):
-    show_raw: reactive[bool] = reactive(False)
-    messages: reactive[List[ChatMessage]] = reactive([])
-
-    def watch_messages(self) -> None:
-        self.refresh_display()
-
-    def watch_show_raw(self) -> None:
-        self.refresh_display()
-
-    def refresh_display(self) -> None:
-        self.remove_children()
-        for msg in self.messages:
-            if self.show_raw:
-                self._add_raw_message(msg)
-            else:
-                self._add_rendered_message(msg)
-        self.scroll_end(animate=False)
-
-    def _add_rendered_message(self, msg: ChatMessage) -> None:
-        """使用ScrollableContainer实现带边框的消息容器"""
-        container = ScrollableContainer(
-            MarkdownViewer("↓ AI烧烤中\n\n" + msg.think + "\n\n↑ 烧烤过程\n\n" + msg.content if len(msg.think) != 0 else msg.content),
-            classes="message-container",
-        )
-        container.styles.border = ("heavy", msg.type.color)
-        self.mount(container)
-
-    def _add_raw_message(self, msg: ChatMessage) -> None:
-        """使用TextArea的正确配置"""
-        if len(msg.think) != 0:
-            res = f"{msg.type.role}:\n{Fore.LIGHTBLACK_EX}{msg.think}{Style.RESET_ALL}\n\n{msg.content}"
-        else:
-            res = f"{msg.type.role}:\n{msg.content}"
-        textarea = TextArea(
-            text=res,
-            read_only=True,
-            language=None,  # 禁用语法高亮
-            classes="raw-message",
-        )
-        textarea.styles.background = msg.type.color
-        self.mount(textarea)
 
 # 主应用类
 class ChatApp(App):
@@ -145,13 +82,25 @@ class ChatApp(App):
     }
     """
 
+    instance = None
+
     def on_mount(self) -> None:
         self.theme = "textual-light"  # 设置默认主题
+        self.run_worker(self.start_core())
+        # asyncio.create_task(self.start_core())
 
     def __init__(self):
         super().__init__()
         self.messages: List[ChatMessage] = []
-        self.show_raw = False
+        self.show_raw = True
+        GlobalFlag.get_instance().is_app_running = True
+        ChatApp.instance = self
+
+    async def start_core(self):
+        asyncio.create_task(main.main())
+        # asyncio.create_task(main.main(loop=asyncio.new_event_loop()))
+        # asyncio.create_task(fake_main())
+        # self.run_worker(main.main(), exclusive=True)
 
     def compose(self) -> ComposeResult:
         yield Horizontal(
@@ -178,6 +127,7 @@ class ChatApp(App):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
             self.exit(str(event.button))
+            GlobalFlag.get_instance().is_app_running = False
 
     def refresh_messages(self):
         display = self.query_one(MessageDisplay)

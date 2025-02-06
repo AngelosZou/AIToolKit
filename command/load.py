@@ -11,7 +11,6 @@ from .commands import registry, Command, CommandContext
 )
 class LoadCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
-        communicate.message = change_main_history(History.load(args[0]))
-        communicate.name = args[0]
+        change_main_history(History.load(args[0]))
         return "使用历史数据覆盖当前对话", ""
 
