@@ -6,12 +6,9 @@ from colorama import Fore, Style
 
 from core.cache import Configure, GlobalFlag
 from core.source.sources import SourceRegistry, BaseSource
+from util.fomatter import delete_think
 
-name:str
-message:list[dict]
-
-
-def communicate(message) -> str:
+def communicate(message) -> [str, str]:
     configure = Configure.get_instance()
     # 检查模型
     if Configure.get_instance().active_model is None:
@@ -24,7 +21,7 @@ def communicate(message) -> str:
         print("使用 /model set <模型> 进行设置")
         return ""
     source_cls: BaseSource.__class__ = SourceRegistry.sources[configure.active_ai]
-    if not source_cls.is_available:
+    if not source_cls.is_available():
         return ""
 
     # ------------------------------
@@ -45,11 +42,11 @@ def communicate(message) -> str:
     stream = source_cls.create_stream(copy(message))
 
     print("\nAI回复: ", end='', flush=True)
-    full_response = process_stream(stream, source_cls)
-    return full_response
+    think, full_response = process_stream(stream, source_cls)
+    return think, full_response
 
 
-def process_stream(stream, source_cls: BaseSource.__class__):
+def process_stream(stream, source_cls: BaseSource.__class__) -> [str, str]:
     """实时将流式响应写入Markdown文件"""
     try:
         start_time = time.time()
@@ -73,16 +70,18 @@ def process_stream(stream, source_cls: BaseSource.__class__):
                 full_think.append(think_content)
             # 处理full_think
             full_think = "".join(full_think)
-            if len(full_think) != 0:
-                full_think = "<think>\n" + full_think + "\n</think>"
-            full_response = full_think + ''.join(full_response)
+            # if len(full_think) != 0:
+            #     full_think = "<think>\n" + full_think + "\n</think>"
+            full_response = ''.join(full_response)
             print(f"{Fore.BLUE}\n耗时{time.time()-start_time:.2f}秒\n--------------------"
                   f"----------------------------------{Style.RESET_ALL}")
         except KeyboardInterrupt:
             print("\n检测到中断信号，打断模型输出，抛弃未完成的信息")
 
-            return ""
-        return full_response
+            return "", ""
+        if len(full_think) == 0:
+            return "", delete_think(full_response)
+        return full_think, full_response
     except Exception as e:
         print(f"\n文件写入错误: {str(e)}")
         return None

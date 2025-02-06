@@ -12,7 +12,7 @@ def process(content: str, send_to_cache: bool = False) -> str:
 
     print("总结子系统启动")
     # TODO: 为总结添加专用模型
-    full_response = communicate([{'role': 'user', 'content': prompt + content}])
+    _, full_response = communicate([{'role': 'user', 'content': prompt + content}])
 
     res = formatter.delete_think(''.join(full_response))
 

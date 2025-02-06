@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
 from core.communicate import communicate
-from core.history import load_history
+from core.history import change_main_history, History
 from .commands import registry, Command, CommandContext
 
 
@@ -11,7 +11,7 @@ from .commands import registry, Command, CommandContext
 )
 class LoadCommand(Command):
     def execute(self, args: List[str], context: CommandContext) -> Tuple[str, str]:
-        communicate.message = load_history(args[0])
+        communicate.message = change_main_history(History.load(args[0]))
         communicate.name = args[0]
         return "使用历史数据覆盖当前对话", ""
 

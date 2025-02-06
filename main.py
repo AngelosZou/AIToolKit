@@ -10,7 +10,7 @@ from command.file import read_file_content
 from core import cache
 from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
-from core.history import save_history
+from core.history import History, MessageRole
 from tool.base_tool import process_model_output
 from util.fomatter import delete_think
 
@@ -65,16 +65,15 @@ def main():
             print("请安装openai库以使用API")
             print("pip install openai")
 
-    communicate.message = []
-    message: [dict] = communicate.message
-    communicate.name = timestamp
+
+    history = History.get_or_create()
 
     path = Path("./resource/prompt/tools.txt")
     prompt = path.read_text(encoding='utf-8')
-    message.append({'role': 'system', 'content': prompt})
+    history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 tools.txt")
     path = Path("./resource/prompt/restrict.txt")
     prompt = path.read_text(encoding='utf-8')
-    message.append({'role': 'system', 'content': prompt})
+    history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 restrict.txt")
 
     already_warn_cache = False # 是否已经提醒过缓存未提交
 
@@ -84,12 +83,16 @@ def main():
         for file in Path("./ref_space/").iterdir():
             if file.is_file():
                 # 使用file.read_file_content(file)读取文件内容
-                message.append({'role': 'system', 'content': f"读取到了本地文件 {read_file_content(file)}"})
+                history.add_message(MessageRole.SYSTEM, read_file_content(file), "")
                 file_count += 1
         if file_count != 0:
-            print(f"\n从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI")
+            msg = f"从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI"
+            history.add_message(MessageRole.SYSTEM, "", msg)
+            print(msg)
         else:
-            print(f"\n未在 ./ref_space/ 中读取到本地文件")
+            msg = f"未在 ./ref_space/ 中读取到本地文件"
+            history.add_message(MessageRole.SYSTEM, "", msg)
+            print(msg)
 
     skip_count = 0
     while cmd_handler.running:
@@ -107,7 +110,8 @@ def main():
                 if user_input.startswith('/'):
                     [for_user, for_model] = cmd_handler.handle_command(user_input)
                     if len(for_model) != 0:
-                        message.append({'role': 'system', 'content': for_model})
+                        # message.append({'role': 'system', 'content': for_model})
+                        history.add_message(MessageRole.SYSTEM, for_model, for_user)
                     print(f"\n[系统提示] {for_user}")
                     continue
 
@@ -118,7 +122,8 @@ def main():
                     continue
                 already_warn_cache = False
 
-                message.append({'role': 'user', 'content': user_input})
+                history.add_message(MessageRole.USER, user_input, user_input)
+                # message.append({'role': 'user', 'content': user_input})
                 # ------------------------------
                 # ↑ 用户输入处理结束
                 # ------------------------------
@@ -127,24 +132,29 @@ def main():
             else:
                 skip_count += 1
                 if skip_count > int(Configure.get_instance().max_skip_input_turn/2):
-                    message.append({'role': 'system', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
+                    history.add_message(MessageRole.SYSTEM, f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制", "")
+                    # message.append({'role': 'system', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
             # 调用AI
             # ------------------------------
-            full_response = communicate(message)
+            think, full_response = communicate(history.to_message())
             # ------------------------------
 
-            message.append({'role': 'assistant', 'content': delete_think(full_response)})
+            history.add_message(MessageRole.ASSISTANT, full_response, full_response, think)
+            # message.append({'role': 'assistant', 'content': full_response})
 
             # 处理AI使用工具
             result = process_model_output(full_response)
             print(result["user_message"])
             if len(result['model_feedback']) != 0:
-                message.append({'role': 'system', 'content': result['model_feedback']})
+                history.add_message(MessageRole.SYSTEM, result['model_feedback'], result['user_message'])
+                # message.append({'role': 'system', 'content': result['model_feedback']})
 
-            save_history(timestamp, message)
+            # 保存对话记录
+            history.save()
+            # save_history(timestamp, message)
 
         except KeyboardInterrupt:
             print("\n检测到中断信号，正在退出...")
