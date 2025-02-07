@@ -5,6 +5,7 @@ import enum
 class State(enum.Enum):
     WAITING_FOR_INPUT = "WAITING_FOR_INPUT"
     FINISH_INPUT = "FINISH_INPUT"
+    PROCESSING = "PROCESSING"
 
 
 class StateManager:

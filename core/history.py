@@ -47,6 +47,10 @@ class History:
         if name is None:
             self.name = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
 
+    def clear(self):
+        self.history = []
+        self.name = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime())
+
     def to_message(self)->list[dict]:
         """转换成发送给模型的消息"""
         message = []
@@ -97,14 +101,14 @@ class History:
         json_file = Path(f"./history/{name}.json")
         if not json_file.exists():
             print("文件不存在")
-            History.MAIN_HISTORY = History()
-            return History.MAIN_HISTORY
+            return History.get_or_create()
         with json_file.open('r', encoding='utf-8') as f:
             content = json.loads(f.read())
-        history = History()
+        history = History.get_or_create()
+        history.clear()
         for msg in content:
             history.add_message(MessageRole.from_role(msg["role"]), msg["for_model"], msg["for_user"], msg["think"])
-        History.MAIN_HISTORY = history
+        history.name = name
         return history
 
 def change_main_history(history: History):

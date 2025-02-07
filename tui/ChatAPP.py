@@ -4,7 +4,7 @@ from typing import List
 
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, VerticalScroll, Vertical
 from textual.widgets import (
     Tree,
     Button
@@ -16,6 +16,7 @@ from tui.message import MsgType, ChatMessage, MessageDisplay
 from core.cache import GlobalFlag
 from core.history import History
 from core.sync.StateManager import StateManager, State
+from tui.widget.RenameInput import RenameVertical, RenameInput
 from .widget.UserInput import UserInput
 
 
@@ -80,6 +81,22 @@ class ChatApp(App):
         max-height: 5;
         margin-top: 1;
     }
+    
+    /* 重命名 */
+    #rename-container {
+        padding: 1;
+        border: round $primary;
+        margin-top: 1;
+    }
+    
+    #rename-container Input {
+        width: 100%;
+    }
+    
+    #rename-container Horizontal {
+        margin-top: 1;
+        align: right middle;
+    }
     """
 
     instance = None
@@ -87,7 +104,6 @@ class ChatApp(App):
     def on_mount(self) -> None:
         self.theme = "textual-light"  # 设置默认主题
         self.run_worker(self.start_core())
-        # asyncio.create_task(self.start_core())
 
     def __init__(self):
         super().__init__()
@@ -98,9 +114,6 @@ class ChatApp(App):
 
     async def start_core(self):
         asyncio.create_task(main.main())
-        # asyncio.create_task(main.main(loop=asyncio.new_event_loop()))
-        # asyncio.create_task(fake_main())
-        # self.run_worker(main.main(), exclusive=True)
 
     def compose(self) -> ComposeResult:
         yield Horizontal(
@@ -112,7 +125,7 @@ class ChatApp(App):
             ),
             VerticalScroll(
                 Button("切换视图", id="toggle-view"),
-                Button("保存记录", id="save"),
+                Button("重命名", id="rename"),
                 Button("退出", id="exit"),
                 id="tools"
             ),
@@ -123,6 +136,21 @@ class ChatApp(App):
     def toggle_view_mode(self):
         self.show_raw = not self.show_raw
         self.query_one(MessageDisplay).show_raw = self.show_raw
+
+    @on(Button.Pressed, "#rename")
+    def handle_rename(self, event: Button.Pressed) -> None:
+        """处理重命名按钮点击"""
+        if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
+            self.notify("只能在输入阶段重命名")
+            return
+
+        # 创建输入组件
+        tools = self.query_one("#tools")
+        if tools.query("#rename-container"):
+            return  # 防止重复添加
+        input_container = RenameVertical()
+        tools.mount(input_container)
+        self.query_one(RenameVertical).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
@@ -149,6 +177,9 @@ class HistorySidebar(Tree):
 
     @on(Tree.NodeSelected)
     def load_selected_history(self, event: Tree.NodeSelected):
+        if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
+            self.notify("只能在输入阶段切换对话")
+            return
         if (path := event.node.data.get("path")) and (file := Path(path)).exists():
             try:
                 # 加载没有路径和后缀的纯文件名

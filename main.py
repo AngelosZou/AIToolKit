@@ -90,9 +90,10 @@ async def main():
                 # 根据是否存在APP来处理数据
                 if GlobalFlag.get_instance().is_app_running:
                     state_manager = StateManager.get_or_create()
+                    await state_manager.set_state(State.WAITING_FOR_INPUT)
                     await state_manager.wait_for_state(State.FINISH_INPUT)
                     user_input = await get_input_from_textual()
-                    await state_manager.set_state(State.WAITING_FOR_INPUT)
+                    await state_manager.set_state(State.PROCESSING)
                 else:
                     user_input = input("请输入内容（输入/help查看指令）: ").strip()
                 if not user_input:
