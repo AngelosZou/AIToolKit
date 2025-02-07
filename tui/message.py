@@ -141,10 +141,11 @@ class CopyText(TextArea):
         if start_line == end_line:
             selected_text = lines[start_line][start_col:end_col]
         else:
+            end = lines[end_line][:end_col] if end_line < len(lines) and end_col > 0 else ""
             selected_text = (
                     lines[start_line][start_col:] +  # 选取首行剩余部分
                     "".join(lines[start_line + 1:end_line]) +  # 选取中间完整行
-                    lines[end_line][:end_col]  # 选取末行开头部分
+                    end  # 选取末行开头部分
             )
 
         # 复制到剪贴板

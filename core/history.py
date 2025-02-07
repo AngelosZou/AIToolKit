@@ -21,22 +21,33 @@ class MessageRole(Enum):
 @dataclass
 class Message:
     # 一条消息
-    role: MessageRole
-    for_model: str
-    for_user: str
-    think: str
+    # role: MessageRole
+    # for_model: str
+    # for_user: str
+    # think: str
+    # tags: list[str] = None
+
+    def __init__(self,role, for_model, for_user, think="", tags=None):
+        self.tags = tags
+        self.role = role
+        self.for_model = for_model
+        self.for_user = for_user
+        self.think = think
+        if self.tags is None:
+            self.tags = []
 
     def __dict__(self):
         return {
             "role": self.role.value if isinstance(self.role.value, str) else self.role.value[0],
             "for_model": self.for_model,
             "for_user": self.for_user,
-            "think": self.think
+            "think": self.think,
+            "tags": self.tags,
         }
 
     @staticmethod
     def from_dict(data: dict):
-        return Message(MessageRole.from_role(data["role"]), data["for_model"], data["for_user"], data["think"])
+        return Message(MessageRole.from_role(data["role"]), data["for_model"], data["for_user"], data["think"], data["tags"])
 
 class History:
     MAIN_HISTORY = None

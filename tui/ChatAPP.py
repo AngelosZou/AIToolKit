@@ -17,6 +17,7 @@ from core.cache import GlobalFlag
 from core.history import History
 from core.sync.StateManager import StateManager, State
 from tui.widget.RenameInput import RenameVertical, RenameInput
+from tui.widget.prompt import PromptManager
 from .widget.UserInput import UserInput
 
 
@@ -126,11 +127,31 @@ class ChatApp(App):
             VerticalScroll(
                 Button("切换视图", id="toggle-view"),
                 Button("重命名", id="rename"),
+                Button("提示词", id="prompt"),
                 Button("退出", id="exit"),
                 id="tools"
             ),
             id="main"
         )
+
+    @on(Button.Pressed, "#prompt")
+    def handle_prompt(self, event: Button.Pressed) -> None:
+        """处理提示词按钮点击"""
+        if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
+            self.notify("只能在输入阶段修改提示词")
+            return
+
+        tools = self.query_one("#tools")
+        if tools.query("#prompt-container"):
+            return  # 防止重复添加
+
+        # 创建并显示提示词管理界面
+        try:
+            prompt_manager = PromptManager()
+            tools.mount(prompt_manager)
+            self.query_one(PromptManager).focus()
+        except Exception as e:
+            self.notify(f"加载提示词失败: {str(e)}", severity="error")
 
     @on(Button.Pressed, "#toggle-view")
     def toggle_view_mode(self):

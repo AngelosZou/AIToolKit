@@ -6,6 +6,7 @@ from colorama import Fore, Style
 
 import core.cache
 from core.SurrogateIO import sio_print, try_create_message
+from core.prompt import reload_prompt
 from tui.message import MsgType
 from tui.widget.UserInput import get_input_from_textual
 from command.commands import CommandHandler
@@ -52,10 +53,11 @@ async def main():
     # prompt = path.read_text(encoding='utf-8')
     # history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 tools.txt")
     # sio_print("加载提示词 tools.txt")
-    path = Path("./resource/prompt/restrict.txt")
-    prompt = path.read_text(encoding='utf-8')
-    history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 restrict.txt")
-    sio_print("加载提示词 restrict.txt")
+    # path = Path("./resource/prompt/restrict.txt")
+    # prompt = path.read_text(encoding='utf-8')
+    # history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 restrict.txt")
+    # sio_print("加载提示词 restrict.txt")
+    reload_prompt(History.get_or_create())
 
     already_warn_cache = False # 是否已经提醒过缓存未提交
 
