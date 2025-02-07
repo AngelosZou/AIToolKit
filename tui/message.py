@@ -9,6 +9,10 @@ from textual.events import Print
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widgets import MarkdownViewer, TextArea
+from textual.app import App, ComposeResult
+from textual.widgets import TextArea
+from textual.events import Event
+import pyperclip
 
 from core.cache import GlobalFlag
 
@@ -46,9 +50,6 @@ class MessageDisplay(VerticalScroll):
     show_raw: reactive[bool] = reactive(True)
     messages: reactive[List[ChatMessage]] = reactive([])
     last_text: TextArea = None
-
-    # def on_mount(self) -> None:
-    #     self.begin_capture_print()
 
     @on(Print)
     def on_print(self, event: Print):
@@ -100,7 +101,7 @@ class MessageDisplay(VerticalScroll):
             res = f"{msg.type.role}:\n{Fore.LIGHTBLACK_EX}{msg.think}{Style.RESET_ALL}\n\n{msg.content}"
         else:
             res = f"{msg.type.role}:\n{msg.content}"
-        textarea = TextArea(
+        textarea = CopyText(
             text=res,
             read_only=True,
             language=None,  # 禁用语法高亮
@@ -116,3 +117,36 @@ class MessageDisplay(VerticalScroll):
             MessageDisplay.last_text.scroll_to(MessageDisplay.last_text.document.end)
 
 
+class CopyText(TextArea):
+    """自定义 TextArea 组件，在选择变化时复制文本到剪贴板。"""
+
+    @on(TextArea.SelectionChanged)
+    def on_selection_changed(self, event: Event) -> None:
+        """当文本选择发生变化时，将选中的文本复制到剪贴板。"""
+        selection = self.selection  # 获取选区信息
+
+        if selection.is_empty:
+            return  # 忽略光标状态（未选中文本）
+
+        # 解析选区位置
+        start_line, start_col = selection.start
+        end_line, end_col = selection.end
+
+        if (start_line > end_line) or (start_line == end_line and start_col > end_col):
+            start_line, end_line = end_line, start_line
+            start_col, end_col = end_col, start_col
+
+        # 获取选中的文本
+        lines = self.text.splitlines(keepends=True)  # 保持换行符
+        if start_line == end_line:
+            selected_text = lines[start_line][start_col:end_col]
+        else:
+            selected_text = (
+                    lines[start_line][start_col:] +  # 选取首行剩余部分
+                    "".join(lines[start_line + 1:end_line]) +  # 选取中间完整行
+                    lines[end_line][:end_col]  # 选取末行开头部分
+            )
+
+        # 复制到剪贴板
+        pyperclip.copy(selected_text)
+        # self.app.notify(f"已复制: {selected_text}", severity="information")
