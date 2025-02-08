@@ -1,7 +1,7 @@
 from textual import on
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
-from textual.containers import Center, Middle, Vertical, VerticalScroll, Horizontal
+from textual.containers import Center, Middle, Vertical, VerticalScroll, Horizontal, HorizontalGroup
 from textual.widgets import Label, Button
 
 from tui.widget.SettingsForm import SettingsForm
@@ -11,21 +11,22 @@ class SettingsScreen(ModalScreen):
     """设置全屏模态窗口"""
     """优化后的设置全屏模态窗口"""
     CSS = """
+
+    
     SettingsScreen {
         align: center middle;
     }
     
     #settings-dialog {
-        width: 60%;
-        height: 80%;
+        width: 70%;
+        height: 100%;
         border: round $primary;
         background: $surface;
         padding: 2;
     }
     
     #settings-content {
-        height: 100%;
-        overflow-y: auto;
+        height: auto;
         padding: 1;
     }
     
@@ -39,23 +40,35 @@ class SettingsScreen(ModalScreen):
     
     .dialog-buttons {
         margin-top: 1;
-        padding: 1;
         height: auto;
-        align: center middle;  /* 正确对齐 */
+        align: center bottom;
     }
     """
 
+    CSS += """
+.setting-item {
+    layout: grid;          /* 使用网格布局 */
+    grid-size: 1;          /* 两列布局 */
+    align: center middle;  /* 垂直水平居中 */
+    height: 5;          /* 高度自适应 */
+    min-height: 5;         /* 最小高度防止过小 */
+    margin: 1 0;
+}
+"""
+
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(id="settings-dialog"):
-            yield Label("⚙ 设置 ⚙", id="settings-title")
-            with VerticalScroll(id="settings-content"):
-                yield SettingsForm()
-            yield Horizontal(
-                Button("保存", id="save-settings", variant="primary"),
-                Button("取消", id="cancel-settings"),
-                classes="dialog-buttons",
-            )
+        yield VerticalScroll(
+                       Label("⚙ 设置 ⚙", id="settings-title"),
+                        SettingsForm(),
+                        HorizontalGroup(
+                            Button("保存", id="save-settings", variant="primary"),
+                            Button("取消", id="cancel-settings"),
+                            classes="dialog-buttons",
+                        ),
+
+                        id="settings-dialog",
+                       )
 
 
     @on(Button.Pressed, "#save-settings")

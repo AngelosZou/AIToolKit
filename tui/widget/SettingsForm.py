@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Vertical, Horizontal
+from textual.containers import Vertical, Horizontal, Grid, VerticalScroll
 from textual.validation import Number, Length
 from textual.widgets import Select, Input, Label, Button
 
@@ -8,63 +8,10 @@ from core.cache import Configure
 from core.source.sources import SourceRegistry
 
 
-class SettingsForm(Vertical):
+class SettingsForm(VerticalScroll):
     """设置表单组件"""
     """设置表单组件（优化布局版）"""
-    CSS = """
-.settings-section {
-    margin: 1 0;
-    border: round $boost;
-    padding: 1;
-}
 
-.section-title {
-    text-style: bold underline;
-    color: $accent;
-    margin-bottom: 1;
-}
-
-.setting-item {
-    height: auto;
-    margin: 1 0;
-    layout: grid;
-    grid-size: 2;
-    grid-columns: 30% 1fr;
-    grid-gutter: 1;
-    align: center middle;
-}
-
-.input-group {
-    height: auto;
-    margin: 1 0;
-}
-
-.input-hint {
-    color: $text-muted;
-    padding-left: 1;
-    margin-top: 0;
-}
-
-.validation-error {
-    color: $error;
-    margin-top: 0;
-    padding-left: 1;
-}
-
-Select, Input {
-    border: round $boost;
-    padding: 0 1;
-}
-
-Select:focus, Input:focus {
-    border: round $accent;
-}
-
-.password-toggle {
-    min-width: 5;
-    margin-left: 1;
-}
-"""
 
     def __init__(self):
         super().__init__(id="settings-container")

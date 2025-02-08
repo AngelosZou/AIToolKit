@@ -231,42 +231,6 @@ class ChatApp(App):
 
         self.push_screen(SettingsScreen())
 
-#     CSS += """
-#     #settings-container {
-#         padding: 1;
-#         border: round $primary;
-#         margin-top: 1;
-#     }
-#
-#     .setting-item {
-#         height: auto;
-#         margin: 1 0;
-#     }
-#
-#     .setting-item Label {
-#         width: 40%;
-#         content-align: right middle;
-#     }
-#
-#     .setting-item Input, .setting-item Select {
-#         width: 60%;
-#     }
-#
-#     #settings-container .buttons {
-#         margin-top: 1;
-#         align: right middle;
-#     }
-# """
-
-#     CSS += """
-#     #model-input {
-#         width: 60%;
-#         border: none;
-#         background: $surface;
-#     }
-#
-# """
-
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
             self.exit(str(event.button))
