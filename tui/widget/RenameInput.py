@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 
 from core.history import History
+from core.Project import Project
 
 
 class RenameInput(Input):
@@ -49,6 +50,14 @@ class RenameVertical(Vertical):
 
         if not re.match(r"^[\w-]+$", new_name):
             self.notify("名称包含非法字符 (只允许字母/数字/下划线/连字符)", severity="error")
+            return
+
+        if Project.instance is None:
+            self.notify("未选择项目")
+            return
+
+        if History.MAIN_HISTORY is None:
+            self.notify("未加载对话")
             return
 
         # 构建新旧路径

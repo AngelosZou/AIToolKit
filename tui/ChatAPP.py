@@ -163,7 +163,7 @@ class ChatApp(App):
             CombinedSidebar(),
             VerticalScroll(
                 MessageDisplay(id="messages"),
-                UserInput(id="chat-input", classes="chat-input"),
+                UserInput(id="chat-input", classes="chat-input", tab_behavior='indent',tooltip="enter: 换行\nctrl+l: 提交\n\\help 查看指令"),
                 id="content"
             ),
             VerticalScroll(
@@ -185,6 +185,8 @@ class ChatApp(App):
 
         tools = self.query_one("#tools")
         if tools.query("#prompt-container"):
+            # 关掉
+            tools.query_one("#prompt-container").remove()
             return  # 防止重复添加
 
         # 创建并显示提示词管理界面
@@ -210,6 +212,8 @@ class ChatApp(App):
         # 创建输入组件
         tools = self.query_one("#tools")
         if tools.query("#rename-container"):
+            # 关掉
+            tools.query_one("#rename-container").remove()
             return  # 防止重复添加
         input_container = RenameVertical()
         tools.mount(input_container)

@@ -18,7 +18,7 @@ class UserInput(TextArea):
         if event.key == "enter":
             event.prevent_default().stop()
             self.insert("\n")
-        if event.key == "E":
+        if event.key == "ctrl+l":
             if Project.instance is None:
                 self.notify("请选择一个项目或创建一个项目来开始对话")
                 return

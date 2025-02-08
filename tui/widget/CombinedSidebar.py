@@ -29,7 +29,7 @@ class CombinedSidebar(Tree):
 
     def __init__(self):
         super().__init__("项目空间", id="sidebar")
-        self.projects_root = self.root.add("📂 项目", expand=True)
+        self.projects_root = self.root.add("· 项目", expand=True)
         self.current_project: Optional[Project] = None
 
         # 初始化项目目录
@@ -41,7 +41,7 @@ class CombinedSidebar(Tree):
 
     def add_project_root(self):
         """添加项目根节点"""
-        self.projects_root = self.root.add("📂 项目", expand=True)
+        self.projects_root = self.root.add("· 项目", expand=True)
 
     def auto_select_first_project(self):
         """自动选择第一个项目"""
@@ -63,8 +63,8 @@ class CombinedSidebar(Tree):
         self.add_project_root()
         self.projects_root.remove_children()
         for project_name in Project.list_projects():
-            self.projects_root.add_leaf(f"📁 {project_name}", {"type": "project", "name": project_name})
-        self.projects_root.add_leaf("➕ 新建项目", {"type": "new_project"})
+            self.projects_root.add_leaf(f"· {project_name}", {"type": "project", "name": project_name})
+        self.projects_root.add_leaf("+ 新建项目", {"type": "new_project"})
 
     def load_project_contents(self):
         """加载当前项目内容"""
@@ -76,10 +76,10 @@ class CombinedSidebar(Tree):
 
         # 添加项目相关内容
         if self.current_project:
-            self.history_root = self.root.add(f"📜 对话历史", expand=True)
-            self.ref_root = self.root.add(f"📎 参考文件", expand=True)
-            self.code_root = self.root.add(f"💻 代码空间", expand=True)
-            self.return_root = self.root.add("🔙 返回", {"type": "return"})
+            self.history_root = self.root.add(f"对话历史", expand=True)
+            self.ref_root = self.root.add(f"参考文件", expand=True)
+            self.code_root = self.root.add(f"代码空间", expand=True)
+            self.return_root = self.root.add("← 返回", {"type": "return"})
 
             self.load_history()
             self.load_space("ref")
@@ -93,7 +93,7 @@ class CombinedSidebar(Tree):
                 file.stem,
                 {"type": "history", "path": str(file)}
             )
-        self.history_root.add_leaf("➕ 新建对话", {"type": "new_history"})
+        self.history_root.add_leaf("+ 新建对话", {"type": "new_history"})
 
     def load_space(self, space_type: str):
         """加载指定空间内容"""
@@ -103,10 +103,10 @@ class CombinedSidebar(Tree):
         for file in self.current_project.dirs[space_type].glob("*"):
             if file.is_file():
                 root.add_leaf(
-                    f"📄 {file.name}",
+                    f" {file.name}",
                     {"type": space_type, "path": str(file)}
                 )
-        root.add_leaf("➕ 添加文件", {"type": f"new_{space_type}"})
+        root.add_leaf("+ 添加文件", {"type": f"new_{space_type}"})
 
     @on(Tree.NodeSelected)
     async def handle_selection(self, event: Tree.NodeSelected):
@@ -133,7 +133,7 @@ class CombinedSidebar(Tree):
     async def _create_new_history(self):
         # 检查控制权
         if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
-            self.app.notify("⚠️ 请等待当前对话完成", severity="warning")
+            self.app.notify("⚠ 请等待当前对话完成", severity="warning")
             return
         # 清空历史记录
         History.get_or_create().clear()
@@ -190,7 +190,7 @@ class CombinedSidebar(Tree):
     async def _load_history(self, node):
         """加载历史记录"""
         if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
-            self.app.notify("⚠️ 请等待当前对话完成", severity="warning")
+            self.app.notify("⚠ 请等待当前对话完成", severity="warning")
             return
 
         # 重启核心
