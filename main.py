@@ -29,6 +29,7 @@ def start_process():
 
 
 async def main():
+
     if Project.instance is None:
         try_create_message(MsgType.SYSTEM)
         sio_print(f"\n选择一个项目或创建一个项目来开始对话")
@@ -67,6 +68,7 @@ async def main():
 
     await init_manager.set_state(InitStateManager.InitState.FINISH)
     try_create_message(MsgType.SYSTEM)
+    GlobalFlag.get_instance().finish_init = True
     sio_print(f"\n对话已启动")
 
     skip_count = 0

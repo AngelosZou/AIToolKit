@@ -6,10 +6,9 @@ from io import StringIO
 from pathlib import Path
 from typing import List, Any, Tuple
 
+from core.Project import Project
 from core.cache import GlobalFlag
 from tool.base_tool import ToolRegistry, BaseTool
-
-code_space = Path("./code_space")
 
 @ToolRegistry.register('write')
 class WriteCommand(BaseTool):
@@ -32,13 +31,15 @@ class WriteCommand(BaseTool):
         return tools
 
 
+
+
     def execute(self, user_output, model_output, args):
         try:
             self.filename, self.code = args
             if '/' in self.filename or '\\' in self.filename:
                 raise ValueError("文件名不能包含路径")
 
-            file_path = code_space / self.filename
+            file_path = code_space() / self.filename
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(self.code)
 
@@ -60,7 +61,7 @@ class RunCommand(BaseTool):
 
     def execute(self, user_output, model_output, args):
         try:
-            main_file = code_space / "main.py"
+            main_file = code_space() / "main.py"
             if not main_file.exists():
                 raise FileNotFoundError("main.py不存在")
 
@@ -103,7 +104,7 @@ class TestCommand(BaseTool):
 
     def execute(self, user_output, model_output, args):
         try:
-            test_file = code_space / "test.py"
+            test_file = code_space() / "test.py"
 
             # 验证测试文件存在
             if not test_file.exists():
@@ -115,7 +116,7 @@ class TestCommand(BaseTool):
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
-                cwd=str(code_space.absolute())
+                cwd=str(code_space().absolute())
             )
 
             try:
@@ -213,3 +214,5 @@ class TestCommand(BaseTool):
             model_output.append(f"Test failed: {str(e)}")
 
 
+def code_space():
+    return Project.instance.root_path / "code_space"

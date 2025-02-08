@@ -64,7 +64,7 @@ async def process_stream(stream, source_cls: BaseSource.__class__) -> [str, str]
         try:
             for chunk in stream:
                 think_content, content = source_cls.catch_chunk_in_stream(chunk)
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(0.05)
                 sio_print(f"{Fore.LIGHTBLACK_EX}{think_content}{Style.RESET_ALL}", end='', flush=True)
                 if len(full_response) == 0 and len(content) != 0:
                     sio_print("\n\n")

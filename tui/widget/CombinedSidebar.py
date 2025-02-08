@@ -136,7 +136,7 @@ class CombinedSidebar(Tree):
             self.app.notify("⚠️ 请等待当前对话完成", severity="warning")
             return
         # 清空历史记录
-        History.MAIN_HISTORY.clear()
+        History.get_or_create().clear()
         # 刷新界面
         self._refresh_interface()
         # 重启核心

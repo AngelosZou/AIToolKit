@@ -1,6 +1,7 @@
 import asyncio
 
 import main
+from core.cache import GlobalFlag
 
 
 class MainKernel:
@@ -10,6 +11,7 @@ class MainKernel:
     @staticmethod
     def start_core():
         # 启动核心
+        GlobalFlag.get_instance().finish_init = False
         task = asyncio.create_task(main.main())
         MainKernel.MAIN_INSTANCE = task
 

@@ -5,6 +5,7 @@ from textual.widgets import Input, TextArea
 
 from core.Project import Project
 from core.SurrogateIO import sio_print
+from core.cache import GlobalFlag
 from core.sync.Kernel import MainKernel
 from tui.message import MsgType, MessageDisplay, ChatMessage
 from core.sync.StateManager import StateManager, State, InitStateManager
@@ -22,7 +23,7 @@ class UserInput(TextArea):
                 self.notify("请选择一个项目或创建一个项目来开始对话")
                 return
             init_manager = InitStateManager.get_or_create()
-            if init_manager.state != InitStateManager.InitState.FINISH:
+            if not GlobalFlag.get_instance().finish_init:
                 self.notify("核心未启动，请选择一个对话或创建一个新对话")
                 return
             state_manager = StateManager.get_or_create()
