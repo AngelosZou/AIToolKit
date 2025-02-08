@@ -53,10 +53,11 @@ class Prompt:
 
 
 
-def reload_prompt(history: History):
+def reload_prompt(history: History, info = True):
     """
     重新加载提示词
     :param history:
+    :param info: 是否显示处理信息
     :return:
     """
     # for msg in history.history:
@@ -64,8 +65,9 @@ def reload_prompt(history: History):
         #     history.history.remove(msg)
 
     history.history = [msg for msg in history.history if "prompt" not in msg.tags]
-    try_create_message(MsgType.SYSTEM)
-    sio_print("清空AI提示词记忆")
+    if info:
+        try_create_message(MsgType.SYSTEM)
+        sio_print("清空AI提示词记忆")
 
     # 遍历 ./resource/prompt/ 文件夹下的所有文件
     prompt_msg = []
@@ -79,7 +81,8 @@ def reload_prompt(history: History):
                 # 使用file.read_file_content(file)读取文件内容
                 prompt = file.read_text(encoding='utf-8')
                 prompt_msg.append(Message(MessageRole.SYSTEM, prompt, f"加载提示词 {file.name}", tags=["prompt"], think=""))
-                sio_print("加载提示词 " + file.name)
+                if info:
+                    sio_print("加载提示词 " + file.name)
 
     # 将prompt放到history开头
     history.history = prompt_msg +history.history

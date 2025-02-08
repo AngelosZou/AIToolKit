@@ -60,29 +60,14 @@ async def main():
     already_warn_cache = False # 是否已经提醒过缓存未提交
 
     await init_manager.set_state(InitStateManager.InitState.LOADING_REFERENCE)
-    try_create_message(MsgType.SYSTEM)
-    sio_print(f"\n清空AI文件记忆")
-    # 遍历 ref_space/ 文件夹下的所有文件
-    file_count = 0
-    if (Project.instance.root_path / "ref_space/").exists():
-        for file in (Project.instance.root_path / "ref_space/").iterdir():
-            if file.is_file():
-                # 使用file.read_file_content(file)读取文件内容
-                history.add_message(MessageRole.SYSTEM, read_file_content(file), "")
-                file_count += 1
-        if file_count != 0:
-            msg = f"从 参考文献 中读取到了{file_count}个本地文件提交给AI"
-            history.add_message(MessageRole.SYSTEM, "", msg)
-            sio_print(msg)
-        else:
-            msg = f"未在 参考文献 中读取到本地文件"
-            history.add_message(MessageRole.SYSTEM, "", msg)
-            sio_print(msg)
+    reload_file(history)
 
     await init_manager.set_state(InitStateManager.InitState.LOADING_CODE)
-    # todo
+    reload_code(history)
 
     await init_manager.set_state(InitStateManager.InitState.FINISH)
+    try_create_message(MsgType.SYSTEM)
+    sio_print(f"\n对话已启动")
 
     skip_count = 0
     while cmd_handler.running:
@@ -139,10 +124,15 @@ async def main():
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
+            # 重新加载提示词、文件、代码
+            reload_prompt(history, info=False)
+            reload_file(history, info=False)
+            reload_code(history, info=False)
+
+            # ------------------------------
             # 调用AI
             # ------------------------------
             try:
-                # think, full_response = await asyncio.get_running_loop().run_in_executor(None, communicate, history.to_message())
                 think, full_response = await communicate(history.to_message())
             except Exception as e:
                 sio_print(f" run_in_executor 失败: {e}")
@@ -174,7 +164,61 @@ async def main():
             sio_print(f"\n发生错误: {str(e)}")
 
 
+def reload_file(history, info=True):
+    if info:
+        try_create_message(MsgType.SYSTEM)
+        sio_print(f"\n清空AI文件记忆")
+    # 移除history中具有file标签的消息
+    history.history = [msg for msg in history.history if "file" not in msg.tags]
+    # 遍历 ref_space/ 文件夹下的所有文件
+    file_count = 0
+    if (Project.instance.root_path / "ref_space/").exists():
+        for file in (Project.instance.root_path / "ref_space/").iterdir():
+            if file.is_file():
+                # 使用file.read_file_content(file)读取文件内容
+                try:
+                    history.add_message_head(MessageRole.SYSTEM, read_file_content(file), "", tags=["file"])
+                except ValueError as e:
+                    if info:
+                        sio_print(f"读取文件{file}失败，已跳过: {e}")
+                    continue
+                file_count += 1
+        if file_count != 0:
+            msg = f"从 参考文献 中读取到了{file_count}个本地文件提交给AI"
+            # history.add_message(MessageRole.SYSTEM, "", msg)
+            if info:
+                sio_print(msg)
+        else:
+            msg = f"未在 参考文献 中读取到本地文件"
+            # history.add_message(MessageRole.SYSTEM, "", msg)
+            if info:
+                sio_print(msg)
 
+def reload_code(history, info=True):
+    if info:
+        try_create_message(MsgType.SYSTEM)
+        sio_print(f"\n清空AI代码记忆")
+    history.history = [msg for msg in history.history if "code" not in msg.tags]
+    # 遍历 ref_space/ 文件夹下的所有文件
+    file_count = 0
+    if (Project.instance.root_path / "code_space/").exists():
+        for file in (Project.instance.root_path / "code_space/").iterdir():
+            if file.is_file():
+                try:
+                    history.add_message_head(MessageRole.SYSTEM, f"*代码空间*可编辑文件{file.name}"+read_file_content(file), "", tags=["code"])
+                except ValueError as e:
+                    if info:
+                        sio_print(f"读取代码{file}失败，已跳过: {e}")
+                    continue
+                file_count += 1
+        if file_count != 0:
+            msg = f"从 代码空间 中读取到了{file_count}个本地文件提交给AI"
+            if info:
+                sio_print(msg)
+        else:
+            msg = f"未在 代码空间 中读取到本地文件"
+            if info:
+                sio_print(msg)
 
 
 if __name__ == "__main__":

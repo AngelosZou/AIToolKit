@@ -84,9 +84,17 @@ class History:
             })
         return message
 
-    def add_message(self, role: MessageRole, for_model: str, for_user: str, think: str = ""):
+    def add_message(self, role: MessageRole, for_model: str, for_user: str, think: str = "", tags = None):
         """添加一条消息"""
-        self.history.append(Message(role, for_model, for_user, think))
+        if tags is None:
+            tags = []
+        self.history.append(Message(role, for_model, for_user, think, tags))
+
+    def add_message_head(self, role: MessageRole, for_model: str, for_user: str, think: str = "", tags = None):
+        """添加一条消息"""
+        if tags is None:
+            tags = []
+        self.history.insert(0, Message(role, for_model, for_user, think, tags))
 
     def save(self):
         """保存对话记录"""
@@ -122,7 +130,7 @@ class History:
         history = History.get_or_create()
         history.clear()
         for msg in content:
-            history.add_message(MessageRole.from_role(msg["role"]), msg["for_model"], msg["for_user"], msg["think"])
+            history.add_message(MessageRole.from_role(msg["role"]), msg["for_model"], msg["for_user"], msg["think"], msg["tags"])
         history.name = name
         return history
 

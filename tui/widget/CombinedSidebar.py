@@ -9,6 +9,7 @@ from textual import on
 import tkinter as tk
 
 from core.Project import Project
+from core.SurrogateIO import try_create_message, sio_print
 from core.history import History
 from core.sync.Kernel import MainKernel
 from core.sync.StateManager import StateManager, State, InitStateManager
@@ -57,6 +58,7 @@ class CombinedSidebar(Tree):
 
     def load_projects(self):
         """加载所有项目"""
+        Project.instance = None
         self.root.remove_children()
         self.add_project_root()
         self.projects_root.remove_children()
@@ -176,6 +178,8 @@ class CombinedSidebar(Tree):
                 space_type = "ref" if path.parent.name == "ref_space" else "code"
                 self.load_space(space_type)
                 self.post_message(FileOperationMessage("delete", str(path)))
+                # try_create_message(MsgType.SYSTEM)
+                # sio_print(f"文件 {path.name} 已删除，重新进入对话以应用修改至AI")
             except Exception as e:
                 self.app.notify(f"删除失败: {str(e)}", severity="error")
             finally:
@@ -195,7 +199,7 @@ class CombinedSidebar(Tree):
         MainKernel.restart_kernel()
         # init_manager = InitStateManager.get_or_create()
         # await init_manager.wait_for_state(InitStateManager.InitState.LOADING_REFERENCE)
-        self.notify("对话已启动")
+        # self.notify("对话已启动")
 
         History.load(Path(node.data["path"]).stem)
         self._refresh_interface()
@@ -238,6 +242,8 @@ class CombinedSidebar(Tree):
         try:
             shutil.copy(src, dest_dir)
             self.load_space(space_type)
+            # try_create_message(MsgType.SYSTEM)
+            # sio_print(f"文件 {src.name} 已添加，重新进入对话以应用修改至AI")
         except Exception as e:
             self.app.notify(f"添加失败: {str(e)}", severity="error")
         finally:
