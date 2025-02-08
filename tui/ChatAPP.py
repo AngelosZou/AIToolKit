@@ -18,8 +18,10 @@ from tui.message import MsgType, ChatMessage, MessageDisplay
 from core.cache import GlobalFlag
 from core.history import History
 from core.sync.StateManager import StateManager, State
+from tui.screen.SettingsScreen import SettingsScreen
 from tui.widget.CombinedSidebar import CombinedSidebar
 from tui.widget.RenameInput import RenameVertical, RenameInput
+from tui.widget.SettingsForm import SettingsForm
 from tui.widget.prompt import PromptManager
 from .widget.UserInput import UserInput
 
@@ -170,6 +172,7 @@ class ChatApp(App):
                 Button("切换视图", id="toggle-view"),
                 Button("重命名", id="rename"),
                 Button("提示词", id="prompt"),
+                Button("设置", id="settings"),
                 Button("退出", id="exit"),
                 id="tools"
             ),
@@ -218,6 +221,51 @@ class ChatApp(App):
         input_container = RenameVertical()
         tools.mount(input_container)
         self.query_one(RenameVertical).focus()
+
+    @on(Button.Pressed, "#settings")
+    def show_settings(self, event: Button.Pressed):
+        """打开设置窗口"""
+        if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
+            self.notify("只能在输入阶段修改设置")
+            return
+
+        self.push_screen(SettingsScreen())
+
+#     CSS += """
+#     #settings-container {
+#         padding: 1;
+#         border: round $primary;
+#         margin-top: 1;
+#     }
+#
+#     .setting-item {
+#         height: auto;
+#         margin: 1 0;
+#     }
+#
+#     .setting-item Label {
+#         width: 40%;
+#         content-align: right middle;
+#     }
+#
+#     .setting-item Input, .setting-item Select {
+#         width: 60%;
+#     }
+#
+#     #settings-container .buttons {
+#         margin-top: 1;
+#         align: right middle;
+#     }
+# """
+
+#     CSS += """
+#     #model-input {
+#         width: 60%;
+#         border: none;
+#         background: $surface;
+#     }
+#
+# """
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "exit":
