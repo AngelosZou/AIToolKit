@@ -24,6 +24,8 @@ class MsgType(Enum):
 
     @staticmethod
     def from_role(role: str):
+        if isinstance(role, tuple):
+            role = role[0]
         return {
             "user": MsgType.USER,
             "system": MsgType.SYSTEM,

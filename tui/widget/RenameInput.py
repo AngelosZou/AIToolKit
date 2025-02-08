@@ -67,8 +67,8 @@ class RenameVertical(Vertical):
             history.save()  # 立即保存
 
             # 刷新侧边栏
-            from tui.ChatAPP import HistorySidebar
-            self.app.query_one(HistorySidebar).load_history()
+            from tui.widget.CombinedSidebar import CombinedSidebar
+            self.app.query_one(CombinedSidebar).load_history()
             self.notify(f"重命名为 {new_name} 成功")
         except Exception as e:
             self.notify(f"重命名失败: {str(e)}", severity="error")

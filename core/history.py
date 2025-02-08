@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from core.Project import Project
+
 
 class MessageRole(Enum):
     USER = "user",
@@ -91,7 +93,8 @@ class History:
         if self.history is None:
             return
 
-        json_file = Path(f"./history/{self.name}.json")
+        # json_file = Path(f"./history/{self.name}.json")
+        json_file = Project.instance.root_path / "history" / f"{self.name}.json"
         if not json_file.parent.exists():
             json_file.parent.mkdir(parents=True)
         to_save = [msg.__dict__() for msg in self.history]
@@ -109,7 +112,8 @@ class History:
     @staticmethod
     def load(name: str):
         """加载对话记录"""
-        json_file = Path(f"./history/{name}.json")
+        # json_file = Path(f"./history/{name}.json")
+        json_file = Project.instance.root_path / "history" / f"{name}.json"
         if not json_file.exists():
             print("文件不存在")
             return History.get_or_create()

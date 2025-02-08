@@ -1,5 +1,6 @@
 from typing import Any
 
+from core.SurrogateIO import sio_print
 from core.cache import Configure
 from core.source.sources import BaseSource, SourceRegistry
 
@@ -10,13 +11,13 @@ class SourceOpenAI(BaseSource):
     def is_available(cls) -> bool:
         # 检查API
         if len(Configure.get_instance().siliconflow_api_key) == 0:
-            print("SiliconFlow API 未配置。")
+            sio_print("SiliconFlow API 未配置。")
             return False
         try:
             from openai import OpenAI
         except ImportError:
-            print("请安装openai库以使用 SiliconFlow API")
-            print("pip install openai")
+            sio_print("请安装openai库以使用 SiliconFlow API")
+            sio_print("pip install openai")
             return False
         return True
 
@@ -28,7 +29,7 @@ class SourceOpenAI(BaseSource):
         try:
             from openai import OpenAI
         except ImportError as e:
-            print("openai库未安装")
+            sio_print("openai库未安装")
             raise e
         client = OpenAI(api_key=api, base_url=url)
         stream = client.chat.completions.create(

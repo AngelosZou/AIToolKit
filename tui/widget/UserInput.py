@@ -3,8 +3,11 @@ from copy import copy
 from textual import events
 from textual.widgets import Input, TextArea
 
+from core.Project import Project
+from core.SurrogateIO import sio_print
+from core.sync.Kernel import MainKernel
 from tui.message import MsgType, MessageDisplay, ChatMessage
-from core.sync.StateManager import StateManager, State
+from core.sync.StateManager import StateManager, State, InitStateManager
 
 
 class UserInput(TextArea):
@@ -15,6 +18,17 @@ class UserInput(TextArea):
             event.prevent_default().stop()
             self.insert("\n")
         if event.key == "E":
+            if Project.instance is None:
+                self.notify("请选择一个项目或创建一个项目来开始对话")
+                return
+            init_manager = InitStateManager.get_or_create()
+            if init_manager.state != InitStateManager.InitState.FINISH:
+                self.notify("核心未启动，请选择一个对话或创建一个新对话")
+                return
+            state_manager = StateManager.get_or_create()
+            if state_manager.state != State.WAITING_FOR_INPUT:
+                self.notify("当前不是输入状态")
+                return
             # 提交消息
             event.prevent_default().stop()
             value = copy(self.text)

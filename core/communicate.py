@@ -27,7 +27,7 @@ async def communicate(message) -> [str, str]:
         return ""
     source_cls: BaseSource.__class__ = SourceRegistry.sources[configure.active_ai]
     if not source_cls.is_available():
-        return ""
+        raise Exception("AI源可用性检验未通过")
 
     # ------------------------------
     # 调用模型

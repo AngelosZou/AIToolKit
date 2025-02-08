@@ -35,7 +35,7 @@ class PromptManager(VerticalScroll):
 
         # 重新加载提示词到历史记录
         reload_prompt(History.get_or_create())
-        self.app.notify("提示词已更新")
+        self.app.notify("提示词更改已更新至AI记忆")
 
         self.remove()
 

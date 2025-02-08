@@ -1,5 +1,6 @@
 from typing import Any
 
+from core.SurrogateIO import sio_print
 from core.cache import Configure
 from core.source.sources import BaseSource, SourceRegistry
 
@@ -12,8 +13,8 @@ class SourceOpenAI(BaseSource):
             import ollama
             from ollama import chat
         except ImportError:
-            print("请安装ollama库以使用Ollama模型")
-            print("pip install ollama")
+            sio_print("请安装ollama库以使用Ollama模型")
+            sio_print("pip install ollama")
             return False
         return True
 
@@ -22,7 +23,7 @@ class SourceOpenAI(BaseSource):
     #     try:
     #         from ollama import chat
     #     except ImportError as e:
-    #         print("ollama 库未安装")
+    #         sio_print("ollama 库未安装")
     #         raise e
     #     stream = chat(
     #         model=Configure.get_instance().active_model["Ollama"],
@@ -36,7 +37,7 @@ class SourceOpenAI(BaseSource):
         try:
             from ollama import chat
         except ImportError as e:
-            print("ollama 库未安装")
+            sio_print("ollama 库未安装")
             raise e
         stream = chat(
             model=Configure.get_instance().active_model["Ollama"],

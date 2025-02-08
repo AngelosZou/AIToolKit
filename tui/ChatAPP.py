@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 from typing import List
 
+from IPython import start_kernel
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, VerticalScroll, Vertical
@@ -12,10 +13,12 @@ from textual.widgets import (
 
 import main
 from core.SurrogateIO import sio_print
+from core.sync.Kernel import MainKernel
 from tui.message import MsgType, ChatMessage, MessageDisplay
 from core.cache import GlobalFlag
 from core.history import History
 from core.sync.StateManager import StateManager, State
+from tui.widget.CombinedSidebar import CombinedSidebar
 from tui.widget.RenameInput import RenameVertical, RenameInput
 from tui.widget.prompt import PromptManager
 from .widget.UserInput import UserInput
@@ -100,11 +103,52 @@ class ChatApp(App):
     }
     """
 
+
+    CSS += """
+    #prompt-container {
+        padding: 1;
+        border: round $primary;
+        margin-top: 1;
+    }
+    
+    #prompt-container Checkbox {
+        margin: 1 0;
+    }
+    
+    #prompt-buttons {
+        margin-top: 1;
+        align: right middle;
+    }
+"""
+
     instance = None
 
     def on_mount(self) -> None:
         self.theme = "textual-light"  # 设置默认主题
         self.run_worker(self.start_core())
+        self.watch_directory("./ref_space", self.refresh_ref_space)
+        self.watch_directory("./code_space", self.refresh_code_space)
+
+    async def start_core(self):
+        MainKernel.start_core()
+
+    def refresh_ref_space(self):
+        self.query_one(CombinedSidebar).load_space("ref")
+
+    def refresh_code_space(self):
+        self.query_one(CombinedSidebar).load_space("code")
+
+    def watch_directory(self, path: str, callback):
+        """简易目录监视（实际开发建议使用watchfiles库）"""
+        async def _watcher():
+            last_state = set()
+            while True:
+                current = set(Path(path).glob("*"))
+                if current != last_state:
+                    callback()
+                    last_state = current
+                await asyncio.sleep(1)
+        self.run_worker(_watcher())
 
     def __init__(self):
         super().__init__()
@@ -113,12 +157,10 @@ class ChatApp(App):
         GlobalFlag.get_instance().is_app_running = True
         ChatApp.instance = self
 
-    async def start_core(self):
-        asyncio.create_task(main.main())
-
     def compose(self) -> ComposeResult:
         yield Horizontal(
-            HistorySidebar(),
+            # HistorySidebar(),
+            CombinedSidebar(),
             VerticalScroll(
                 MessageDisplay(id="messages"),
                 UserInput(id="chat-input", classes="chat-input"),

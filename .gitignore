@@ -2,6 +2,7 @@ __pycache__/
 code_space/*
 ref_space/*
 history/*
+projects/*
 
 .idea/
 
@@ -13,3 +14,4 @@ conversation.md
 *.json
 
 test.py
+testapp.py

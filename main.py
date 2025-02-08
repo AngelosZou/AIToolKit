@@ -5,6 +5,7 @@ from pathlib import Path
 from colorama import Fore, Style
 
 import core.cache
+from core.Project import Project
 from core.SurrogateIO import sio_print, try_create_message
 from core.prompt import reload_prompt
 from tui.message import MsgType
@@ -16,7 +17,7 @@ from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
 from core.history import History, MessageRole
 from core.source.sources import SourceRegistry
-from core.sync.StateManager import StateManager, State
+from core.sync.StateManager import StateManager, State, InitStateManager
 from tool.base_tool import process_model_output
 
 
@@ -28,14 +29,18 @@ def start_process():
 
 
 async def main():
-    # try_create_message(MsgType.SYSTEM)
-    # sio_print(f"事件循环: {loop}")
-    # if loop is None:
-    #     loop = asyncio.get_running_loop()
+    if Project.instance is None:
+        try_create_message(MsgType.SYSTEM)
+        sio_print(f"\n选择一个项目或创建一个项目来开始对话")
+        return
+    init_manager = InitStateManager.get_or_create()
+    await init_manager.set_state(InitStateManager.InitState.STARTING)
     cmd_handler = CommandHandler()
 
+    await init_manager.set_state(InitStateManager.InitState.LOADING_CONFIGURE)
     configure = core.cache.Configure.get_instance()
 
+    await init_manager.set_state(InitStateManager.InitState.CHECKING_SOURCE)
     if configure.active_ai is None:
         try_create_message(MsgType.SYSTEM)
         sio_print(f"\n未选择AI加载器来源")
@@ -46,38 +51,38 @@ async def main():
         try_create_message(MsgType.SYSTEM)
         sio_print(f"\n当前AI加载器来源：{configure.active_ai}")
 
+    await init_manager.set_state(InitStateManager.InitState.LOADING_HISTORY)
     history = History.get_or_create()
 
-    try_create_message(MsgType.SYSTEM)
-    # path = Path("./resource/prompt/tools.txt")
-    # prompt = path.read_text(encoding='utf-8')
-    # history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 tools.txt")
-    # sio_print("加载提示词 tools.txt")
-    # path = Path("./resource/prompt/restrict.txt")
-    # prompt = path.read_text(encoding='utf-8')
-    # history.add_message(MessageRole.SYSTEM, prompt, f"加载提示词 restrict.txt")
-    # sio_print("加载提示词 restrict.txt")
+    # try_create_message(MsgType.SYSTEM)
     reload_prompt(History.get_or_create())
 
     already_warn_cache = False # 是否已经提醒过缓存未提交
 
+    await init_manager.set_state(InitStateManager.InitState.LOADING_REFERENCE)
     try_create_message(MsgType.SYSTEM)
-    # 遍历 ./ref_space/ 文件夹下的所有文件
+    sio_print(f"\n清空AI文件记忆")
+    # 遍历 ref_space/ 文件夹下的所有文件
     file_count = 0
-    if Path("./ref_space/").exists():
-        for file in Path("./ref_space/").iterdir():
+    if (Project.instance.root_path / "ref_space/").exists():
+        for file in (Project.instance.root_path / "ref_space/").iterdir():
             if file.is_file():
                 # 使用file.read_file_content(file)读取文件内容
                 history.add_message(MessageRole.SYSTEM, read_file_content(file), "")
                 file_count += 1
         if file_count != 0:
-            msg = f"从 ./ref_space/ 中读取到了{file_count}个本地文件提交给AI"
+            msg = f"从 参考文献 中读取到了{file_count}个本地文件提交给AI"
             history.add_message(MessageRole.SYSTEM, "", msg)
             sio_print(msg)
         else:
-            msg = f"未在 ./ref_space/ 中读取到本地文件"
+            msg = f"未在 参考文献 中读取到本地文件"
             history.add_message(MessageRole.SYSTEM, "", msg)
             sio_print(msg)
+
+    await init_manager.set_state(InitStateManager.InitState.LOADING_CODE)
+    # todo
+
+    await init_manager.set_state(InitStateManager.InitState.FINISH)
 
     skip_count = 0
     while cmd_handler.running:

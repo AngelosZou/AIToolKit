@@ -1,8 +1,9 @@
 import copy
 from pathlib import Path
 
-from core.SurrogateIO import sio_print
+from core.SurrogateIO import sio_print, try_create_message
 from core.history import History, Message, MessageRole
+from tui.message import MsgType
 
 
 class Prompt:
@@ -63,6 +64,8 @@ def reload_prompt(history: History):
         #     history.history.remove(msg)
 
     history.history = [msg for msg in history.history if "prompt" not in msg.tags]
+    try_create_message(MsgType.SYSTEM)
+    sio_print("清空AI提示词记忆")
 
     # 遍历 ./resource/prompt/ 文件夹下的所有文件
     prompt_msg = []
@@ -75,7 +78,7 @@ def reload_prompt(history: History):
                     continue
                 # 使用file.read_file_content(file)读取文件内容
                 prompt = file.read_text(encoding='utf-8')
-                prompt_msg.append(Message(MessageRole.SYSTEM, prompt, f"加载提示词 restrict.txt", tags=["prompt"], think=""))
+                prompt_msg.append(Message(MessageRole.SYSTEM, prompt, f"加载提示词 {file.name}", tags=["prompt"], think=""))
                 sio_print("加载提示词 " + file.name)
 
     # 将prompt放到history开头
