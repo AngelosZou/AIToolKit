@@ -12,7 +12,6 @@ def sio_print(msg, end="\n", flush=False)->None:
     from tui.message import MessageDisplay
 
     if GlobalFlag.get_instance().is_app_running:
-        # msg.replace("\x1b[90m", "").replace("\x1b[0m", "").replace("\x1b[91m", "")
         # 使用正则表达式去除
         msg = re.sub(r'\x1b\[\d+m', '', msg)
         ChatApp.instance.query_one(MessageDisplay).append_content(msg+end)

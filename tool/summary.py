@@ -18,12 +18,12 @@ class SummaryCommand(BaseTool):
     def execute(self, user_output, model_output, args):
         GlobalFlag.get_instance().skip_user_input = True
         if not CatchInformation.get_instance().info:
-            user_output.append("⚠️ 没有可总结的缓存内容")
+            user_output.append("⚠ 没有可总结的缓存内容")
             return
 
         try:
             summary = summarizer.process(CatchInformation.get_instance().info, send_to_cache=True)
-            user_output.append("\n📝 总结已完成")
+            user_output.append("\n 总结已完成")
             model_output.append(f"总结子AI系统的输出: {summary}")
         except Exception as e:
-            user_output.append(f"⚠️ 总结失败: {str(e)}")
+            user_output.append(f"⚠ 总结失败: {str(e)}")

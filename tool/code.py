@@ -43,10 +43,10 @@ class WriteCommand(BaseTool):
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(self.code)
 
-            user_output.append(f"\n📝 已写入文件: {self.filename}")
+            user_output.append(f"\n 已写入文件: {self.filename}")
             model_output.append(f"File written: {self.filename}")
         except Exception as e:
-            user_output.append(f"\n⚠️ 写入失败: {str(e)}")
+            user_output.append(f"\n⚠ 写入失败: {str(e)}")
             model_output.append(f"Write failed: {str(e)}")
 
 
@@ -84,12 +84,12 @@ class RunCommand(BaseTool):
                 output = sys.stdout.read()
                 sys.stdout = original_stdout
 
-            user_output.append("\n🔄 运行结果:\n" + output)
+            user_output.append("\n 运行结果:\n" + output)
             model_output.append(f"Run output:\n{output}")
 
         except Exception as e:
             error_msg = f"运行错误: {str(e)}"
-            user_output.append("\n⚠️ " + error_msg)
+            user_output.append("\n⚠ " + error_msg)
             model_output.append(f"Run failed: {str(e)}")
 
 @ToolRegistry.register('test')
@@ -174,16 +174,16 @@ class TestCommand(BaseTool):
                         elif error_phase == 'details':
                             current_failure['details'].append(line.strip())
             except Exception as e:
-                user_output.append(f"\n⚠️ 测试结果解析错误：{str(e)}")
+                user_output.append(f"\n⚠ 测试结果解析错误：{str(e)}")
 
             # 构建结果输出
             if result.returncode == 0:
-                user_output.append("\n✅ 所有测试通过")
+                user_output.append("\n 所有测试通过")
                 model_output.append("All tests passed")
             else:
                 # 在构建报告部分修改为：
                 try:
-                    report = ["\n❌ 未通过测试："]
+                    report = ["\n 未通过测试："]
                     for idx, test in enumerate(failed_tests, 1):
                         entry = [
                             f"{idx}. 测试函数：{test.get('name', '未知函数')}",
@@ -204,13 +204,13 @@ class TestCommand(BaseTool):
 
                     user_output.append("\n".join(report))
                 except Exception as e:
-                    user_output.append(f"\n⚠️ 用户报告构建错误：{str(e)}\n已将完整测试结果提交AI")
+                    user_output.append(f"\n⚠ 用户报告构建错误：{str(e)}\n已将完整测试结果提交AI")
                 model_output.append(f"测试失败详情：{result.stdout}")
                 GlobalFlag.get_instance().skip_user_input = True
 
         except Exception as e:
             error_msg = f"测试执行错误：{str(e)}"
-            user_output.append(f"\n⚠️ {error_msg}")
+            user_output.append(f"\n⚠ {error_msg}")
             model_output.append(f"Test failed: {str(e)}")
 
 

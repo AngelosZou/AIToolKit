@@ -22,7 +22,7 @@ class SearchCommand(BaseTool):
             try:
                 from googleapiclient.discovery import build
             except ImportError:
-                user_output.append("⚠️ 请安装google-api-python-client库以使用搜索功能")
+                user_output.append("⚠ 请安装google-api-python-client库以使用搜索功能")
                 model_output.append("Search failed")
                 return
             # 调用搜索API（复用已有SearchCommand逻辑）
@@ -30,7 +30,7 @@ class SearchCommand(BaseTool):
             cse_id = Configure.get_instance().google_cse_id
 
             if not api_key or not cse_id:
-                user_output.append(f"⚠️ 搜索失败: 未配置API密钥")
+                user_output.append(f"⚠ 搜索失败: 未配置API密钥")
                 model_output.append("搜索失败，用户没有配置API或CSE ID，不要再尝试搜索，知道用户再次要求。")
                 return
             service = build("customsearch", "v1", developerKey=api_key)
@@ -39,7 +39,7 @@ class SearchCommand(BaseTool):
             search_results = result.get('items', [])
 
             # 构建用户可见结果
-            response = ["\n🔍 搜索结果："]
+            response = ["\n 搜索结果："]
             for idx, item in enumerate(search_results, 1):
                 response.append(f"{idx}. {item['title']}")
 
@@ -53,6 +53,6 @@ class SearchCommand(BaseTool):
             model_output.append("\n".join(model_response))  # 替换原有简单提示
 
         except Exception as e:
-            user_output.append(f"⚠️ 搜索失败: {str(e)}")
+            user_output.append(f"⚠ 搜索失败: {str(e)}")
             model_output.append(f"搜索遇到错误 {str(e)}\n根据错误提示，如果是你可以修复的问题，尝试修复，否则直到用户再次请求，不要使用搜索。")
 

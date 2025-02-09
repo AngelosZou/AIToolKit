@@ -50,7 +50,7 @@ class SettingsForm(VerticalScroll):
         api_fields = [
             ("Google API Key", "google_api_key", config.google_api_key),
             ("OpenAI API Key", "openai_api_key", config.openai_api_key),
-            ("Siliconflow API Key", "siliconflow_api_key", config.siliconflow_api_key),
+            ("SiliconFlow API Key", "siliconflow_api_key", config.siliconflow_api_key),
             ("Deepseek API Key", "deepseek_api_key", config.deepseek_api_key),
             ("Google CSE ID", "google_cse_id", config.google_cse_id)
         ]

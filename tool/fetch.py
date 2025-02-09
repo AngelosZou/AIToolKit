@@ -22,7 +22,7 @@ class FetchCommand(BaseTool):
             content = fetch_web_content(args)
             CatchInformation.get_instance().info = content
 
-            user_output.append(f"\n🌐 成功获取网页内容: {args}")
+            user_output.append(f"\n 成功获取网页内容: {args}")
             if not ToolProcessor.has_summary:
                 model_output.append(f"Web content cached: {args}")
 
@@ -30,5 +30,5 @@ class FetchCommand(BaseTool):
 
 
         except Exception as e:
-            user_output.append(f"\n⚠️ 网页获取失败: {str(e)}")
+            user_output.append(f"\n⚠ 网页获取失败: {str(e)}")
             model_output.append("Fetch failed")

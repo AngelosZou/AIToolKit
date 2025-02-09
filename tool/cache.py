@@ -19,5 +19,5 @@ class CacheCommand(BaseTool):
         return tools
 
     def execute(self, user_output, model_output,  args):
-        user_output.append("\n✅ 信息已缓存")
+        user_output.append("\n 信息已缓存")
         CatchInformation.get_instance().info = args

@@ -23,21 +23,6 @@ from tui.screen.ToolScreen import ToolScreen
 from tui.widget.CombinedSidebar import CombinedSidebar
 from .widget.UserInput import UserInput
 
-
-async def fake_main():
-    while True:
-        state_manager = StateManager.get_or_create()
-        await state_manager.wait_for_state(State.FINISH_INPUT)
-        # await asyncio.sleep(5)
-        await state_manager.set_state(State.WAITING_FOR_INPUT)
-        sio_print("Fake main running")
-        GlobalFlag.get_instance().is_communicating = True
-        sio_print("Fake main running")
-        await asyncio.sleep(5)
-        sio_print("Hello")
-        GlobalFlag.get_instance().is_communicating = False
-
-
 # 主应用类
 class ChatApp(App):
     CSS = """
@@ -135,7 +120,7 @@ class ChatApp(App):
         self.query_one(CombinedSidebar).load_space("code")
 
     def watch_directory(self, path: str, callback):
-        """简易目录监视（实际开发建议使用watchfiles库）"""
+        """简易目录监视"""
         async def _watcher():
             last_state = set()
             while True:
@@ -204,16 +189,6 @@ class ChatApp(App):
             return
 
         self.push_screen(RenameScreen())
-
-        # # 创建输入组件
-        # tools = self.query_one("#tools")
-        # if tools.query("#rename-container"):
-        #     # 关掉
-        #     tools.query_one("#rename-container").remove()
-        #     return  # 防止重复添加
-        # input_container = RenameVertical()
-        # tools.mount(input_container)
-        # self.query_one(RenameVertical).focus()
 
     @on(Button.Pressed, "#settings")
     def show_settings(self, event: Button.Pressed):

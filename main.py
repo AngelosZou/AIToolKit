@@ -1,35 +1,25 @@
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from colorama import Fore, Style
 
 import core.cache
-from core.Project import Project
-from core.SurrogateIO import sio_print, try_create_message
-from core.prompt import reload_prompt
-from tui.message import MsgType
-from tui.widget.UserInput import get_input_from_textual
 from command.commands import CommandHandler
 from command.file import read_file_content
 from core import cache
+from core.Project import Project
+from core.SurrogateIO import sio_print, try_create_message
 from core.cache import Configure, GlobalFlag
 from core.communicate import communicate
 from core.history import History, MessageRole
+from core.prompt import reload_prompt
 from core.source.sources import SourceRegistry
 from core.sync.StateManager import StateManager, State, InitStateManager
 from tool.base_tool import process_model_output
-
-
-def start_process():
-    """
-    开始一段新对话的初始化处理
-    :return:
-    """
+from tui.message import MsgType
+from tui.widget.UserInput import get_input_from_textual
 
 
 async def main():
-
     if Project.instance is None:
         try_create_message(MsgType.SYSTEM)
         sio_print(f"\n选择一个项目或创建一个项目来开始对话")
@@ -55,10 +45,9 @@ async def main():
     await init_manager.set_state(InitStateManager.InitState.LOADING_HISTORY)
     history = History.get_or_create()
 
-    # try_create_message(MsgType.SYSTEM)
     reload_prompt(History.get_or_create())
 
-    already_warn_cache = False # 是否已经提醒过缓存未提交
+    already_warn_cache = False  # 是否已经提醒过缓存未提交
 
     await init_manager.set_state(InitStateManager.InitState.LOADING_REFERENCE)
     reload_file(history)
@@ -76,7 +65,7 @@ async def main():
         try:
             if (not GlobalFlag.get_instance().skip_user_input or
                     (skip_count >= configure.max_skip_input_turn != -1)
-                or GlobalFlag.get_instance().force_stop):
+                    or GlobalFlag.get_instance().force_stop):
                 if not GlobalFlag.get_instance().is_app_running:
                     sio_print(f"{Fore.RED}------------------------------------------------------{Style.RESET_ALL}")
 
@@ -97,22 +86,20 @@ async def main():
                 if user_input.startswith('/'):
                     [for_user, for_model] = cmd_handler.handle_command(user_input)
                     if len(for_model) != 0:
-                        # message.append({'role': 'system', 'content': for_model})
                         history.add_message(MessageRole.SYSTEM, for_model, for_user)
                     try_create_message(MsgType.SYSTEM)
                     sio_print(f"\n[系统提示] {for_user}")
                     continue
 
-
-                if not already_warn_cache and len(cache.CatchInformation.get_instance().info)!=0:
+                if not already_warn_cache and len(cache.CatchInformation.get_instance().info) != 0:
                     try_create_message(MsgType.SYSTEM)
-                    sio_print("\n[系统提示] 请注意，缓存中有未提交的信息，请使用/submit提交给AI，再次输入交流将强制交互主AI并忽视缓存")
+                    sio_print(
+                        "\n[系统提示] 请注意，缓存中有未提交的信息，请使用/submit提交给AI，再次输入交流将强制交互主AI并忽视缓存")
                     already_warn_cache = True
                     continue
                 already_warn_cache = False
 
                 history.add_message(MessageRole.USER, user_input, user_input)
-                # message.append({'role': 'user', 'content': user_input})
                 # ------------------------------
                 # ↑ 用户输入处理结束
                 # ------------------------------
@@ -120,8 +107,11 @@ async def main():
                 GlobalFlag.get_instance().force_stop = False
             else:
                 skip_count += 1
-                if skip_count > int(Configure.get_instance().max_skip_input_turn/2) and Configure.get_instance().max_skip_input_turn != -1:
-                    history.add_message(MessageRole.SYSTEM, f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制", "")
+                if skip_count > int(
+                        Configure.get_instance().max_skip_input_turn / 2) and Configure.get_instance().max_skip_input_turn != -1:
+                    history.add_message(MessageRole.SYSTEM,
+                                        f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制",
+                                        "")
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
@@ -137,12 +127,10 @@ async def main():
             try:
                 think, full_response = await communicate(history.to_message())
             except Exception as e:
-                sio_print(f" run_in_executor 失败: {e}")
-            # think, full_response = communicate(history.to_message())
+                sio_print(f" communicate 错误: {e}")
             # ------------------------------
 
             history.add_message(MessageRole.ASSISTANT, full_response, full_response, think)
-            # message.append({'role': 'assistant', 'content': full_response})
 
             # 处理AI使用工具
             result = process_model_output(full_response)
@@ -151,12 +139,10 @@ async def main():
                 sio_print(result["user_message"])
             if len(result['model_feedback']) != 0:
                 history.add_message(MessageRole.SYSTEM, result['model_feedback'], result['user_message'])
-                # message.append({'role': 'system', 'content': result['model_feedback']})
 
             GlobalFlag.get_instance().is_communicating = False
             # 保存对话记录
             history.save()
-            # save_history(timestamp, message)
 
         except KeyboardInterrupt:
             sio_print("\n检测到中断信号，正在退出...")
@@ -187,14 +173,13 @@ def reload_file(history, info=True):
                 file_count += 1
         if file_count != 0:
             msg = f"从 参考文献 中读取到了{file_count}个本地文件提交给AI"
-            # history.add_message(MessageRole.SYSTEM, "", msg)
             if info:
                 sio_print(msg)
         else:
             msg = f"未在 参考文献 中读取到本地文件"
-            # history.add_message(MessageRole.SYSTEM, "", msg)
             if info:
                 sio_print(msg)
+
 
 def reload_code(history, info=True):
     if info:
@@ -207,7 +192,9 @@ def reload_code(history, info=True):
         for file in (Project.instance.root_path / "code_space/").iterdir():
             if file.is_file():
                 try:
-                    history.add_message_head(MessageRole.SYSTEM, f"*代码空间*可编辑文件{file.name}"+read_file_content(file), "", tags=["code"])
+                    history.add_message_head(MessageRole.SYSTEM,
+                                             f"*代码空间*可编辑文件{file.name}" + read_file_content(file), "",
+                                             tags=["code"])
                 except ValueError as e:
                     if info:
                         sio_print(f"读取代码{file}失败，已跳过: {e}")
@@ -222,6 +209,7 @@ def reload_code(history, info=True):
             if info:
                 sio_print(msg)
 
+
 def reload_tool(history, info=True):
     if info:
         try_create_message(MsgType.SYSTEM)
@@ -233,7 +221,8 @@ def reload_tool(history, info=True):
         for file in Path("./resource/prompt/tool").iterdir():
             if file.is_file() and file.suffix == ".txt" and history.tool_settings.get(file.stem, True):
                 try:
-                    history.add_message_head(MessageRole.SYSTEM, f"加载*工具*信息{file.stem}"+read_file_content(file), "", tags=["tool"])
+                    history.add_message_head(MessageRole.SYSTEM, f"加载*工具*信息{file.stem}" + read_file_content(file),
+                                             "", tags=["tool"])
                 except ValueError as e:
                     if info:
                         sio_print(f"读取工具{file}失败，已跳过: {e}")
@@ -247,7 +236,9 @@ def reload_tool(history, info=True):
             if info:
                 sio_print(msg)
 
+
 if __name__ == "__main__":
     from tui.ChatAPP import ChatApp
+
     app = ChatApp()
     app.run()

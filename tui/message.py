@@ -71,7 +71,6 @@ class MessageDisplay(VerticalScroll):
 
     def append_content(self, content: str) -> None:
         self.messages[-1].content += content
-        # self.refresh_display()
 
     def watch_messages(self) -> None:
         self.refresh_display()
@@ -152,4 +151,3 @@ class CopyText(TextArea):
 
         # 复制到剪贴板
         pyperclip.copy(selected_text)
-        # self.app.notify(f"已复制: {selected_text}", severity="information")

@@ -1,19 +1,18 @@
 import shutil
+import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import Optional
 
-from textual.widgets import Tree
-from textual.message import Message
 from textual import on
-import tkinter as tk
+from textual.message import Message
+from textual.widgets import Tree
 
 from core.Project import Project
-from core.SurrogateIO import try_create_message, sio_print
 from core.cache import GlobalFlag
 from core.history import History
 from core.sync.Kernel import MainKernel
-from core.sync.StateManager import StateManager, State, InitStateManager
+from core.sync.StateManager import StateManager, State
 from tui.message import ChatMessage, MsgType
 
 
@@ -38,17 +37,10 @@ class CombinedSidebar(Tree):
         self.projects_dir.mkdir(exist_ok=True)
 
         self.load_projects()
-        # self.auto_select_first_project()
 
     def add_project_root(self):
         """添加项目根节点"""
         self.projects_root = self.root.add("· 项目", expand=True)
-
-    def auto_select_first_project(self):
-        """自动选择第一个项目"""
-        projects = Project.list_projects()
-        if projects:
-            self.select_project(projects[0])
 
     def select_project(self, project_name: str):
         """选择指定项目"""
@@ -71,9 +63,6 @@ class CombinedSidebar(Tree):
         """加载当前项目内容"""
         # 清空历史节点
         self.root.remove_children()
-        # for node in self.root.children:
-        #     if node.label.__str__().startswith("📜"):
-        #         self.root.remove_children()
 
         # 添加项目相关内容
         if self.current_project:
@@ -201,9 +190,6 @@ class CombinedSidebar(Tree):
         self.notify("正在重启对话核心...")
         # 调用核心
         MainKernel.restart_kernel()
-        # init_manager = InitStateManager.get_or_create()
-        # await init_manager.wait_for_state(InitStateManager.InitState.LOADING_REFERENCE)
-        # self.notify("对话已启动")
 
         History.load(Path(node.data["path"]).stem)
         self._refresh_interface()
@@ -246,8 +232,6 @@ class CombinedSidebar(Tree):
         try:
             shutil.copy(src, dest_dir)
             self.load_space(space_type)
-            # try_create_message(MsgType.SYSTEM)
-            # sio_print(f"文件 {src.name} 已添加，重新进入对话以应用修改至AI")
         except Exception as e:
             self.app.notify(f"添加失败: {str(e)}", severity="error")
         finally:

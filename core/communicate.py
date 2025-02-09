@@ -1,7 +1,6 @@
 import asyncio
 import time
 from copy import copy
-from pathlib import Path
 
 from colorama import Fore, Style
 
@@ -10,6 +9,7 @@ from core.cache import Configure, GlobalFlag
 from core.source.sources import SourceRegistry, BaseSource
 from tui.message import MsgType
 from util.fomatter import delete_think
+
 
 async def communicate(message) -> [str, str]:
     configure = Configure.get_instance()
@@ -45,7 +45,6 @@ async def communicate(message) -> [str, str]:
             message[i]['system'] = True
 
     stream = source_cls.create_stream(copy(message))
-    # stream = source_cls.create_stream_async(message)
 
     GlobalFlag.get_instance().is_communicating = True
     try_create_message(MsgType.ASSISTANT)
@@ -79,8 +78,6 @@ async def process_stream(stream, source_cls: BaseSource.__class__) -> [str, str]
                 full_think.append(think_content)
             # 处理full_think
             full_think = "".join(full_think)
-            # if len(full_think) != 0:
-            #     full_think = "<think>\n" + full_think + "\n</think>"
             full_response = ''.join(full_response)
             sio_print(f"{Fore.BLUE}\n耗时{time.time()-start_time:.2f}秒\n--------------------"
                   f"----------------------------------{Style.RESET_ALL}")
