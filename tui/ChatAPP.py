@@ -16,11 +16,11 @@ from core.history import History
 from core.sync.Kernel import MainKernel
 from core.sync.StateManager import StateManager, State
 from tui.message import MsgType, ChatMessage, MessageDisplay
+from tui.screen.PromptScreen import PromptScreen
 from tui.screen.RenameScreen import RenameScreen
 from tui.screen.SettingsScreen import SettingsScreen
 from tui.screen.ToolScreen import ToolScreen
 from tui.widget.CombinedSidebar import CombinedSidebar
-from tui.widget.prompt import PromptManager
 from .widget.UserInput import UserInput
 
 
@@ -181,19 +181,7 @@ class ChatApp(App):
             self.notify("只能在输入阶段修改提示词")
             return
 
-        tools = self.query_one("#tools")
-        if tools.query("#prompt-container"):
-            # 关掉
-            tools.query_one("#prompt-container").remove()
-            return  # 防止重复添加
-
-        # 创建并显示提示词管理界面
-        try:
-            prompt_manager = PromptManager()
-            tools.mount(prompt_manager)
-            self.query_one(PromptManager).focus()
-        except Exception as e:
-            self.notify(f"加载提示词失败: {str(e)}", severity="error")
+        self.push_screen(PromptScreen())
 
     @on(Button.Pressed, "#toggle-view")
     def toggle_view_mode(self):
