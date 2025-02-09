@@ -6,12 +6,12 @@ from core.cache import CatchInformation
 from core.communicate import communicate
 
 
-def process(content: str, send_to_cache: bool = False) -> str:
+async def process(content: str, send_to_cache: bool = False) -> str:
     path = Path("./resource/prompt/agent/summarizer.txt")
     prompt = path.read_text(encoding='utf-8')
 
     print("总结子系统启动")
-    _, full_response = communicate([{'role': 'user', 'content': prompt + content}])
+    _, full_response = await communicate([{'role': 'user', 'content': prompt + content}])
 
     res = formatter.delete_think(''.join(full_response))
 

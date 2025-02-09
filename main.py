@@ -120,9 +120,8 @@ async def main():
                 GlobalFlag.get_instance().force_stop = False
             else:
                 skip_count += 1
-                if skip_count > int(Configure.get_instance().max_skip_input_turn/2) and skip_count != -1:
+                if skip_count > int(Configure.get_instance().max_skip_input_turn/2) and Configure.get_instance().max_skip_input_turn != -1:
                     history.add_message(MessageRole.SYSTEM, f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制", "")
-                    # message.append({'role': 'system', 'content': f"[系统消息] 已经连续跳过{skip_count}轮用户输入，请减少不必要的工具使用，达到最大轮次{Configure.get_instance().max_skip_input_turn}将强制停止AI控制"})
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
@@ -232,7 +231,7 @@ def reload_tool(history, info=True):
     file_count = 0
     if Path("./resource/prompt/tool").exists():
         for file in Path("./resource/prompt/tool").iterdir():
-            if file.is_file() and file.suffix == ".txt":
+            if file.is_file() and file.suffix == ".txt" and history.tool_settings.get(file.stem, True):
                 try:
                     history.add_message_head(MessageRole.SYSTEM, f"加载*工具*信息{file.stem}"+read_file_content(file), "", tags=["tool"])
                 except ValueError as e:

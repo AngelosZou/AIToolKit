@@ -10,6 +10,7 @@ import tkinter as tk
 
 from core.Project import Project
 from core.SurrogateIO import try_create_message, sio_print
+from core.cache import GlobalFlag
 from core.history import History
 from core.sync.Kernel import MainKernel
 from core.sync.StateManager import StateManager, State, InitStateManager
@@ -134,6 +135,9 @@ class CombinedSidebar(Tree):
         # 检查控制权
         if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
             self.app.notify("⚠ 请等待当前对话完成", severity="warning")
+            return
+        if GlobalFlag.get_instance().occupy_user_input:
+            self.notify("请等待核心完成处理")
             return
         # 清空历史记录
         History.get_or_create().clear()

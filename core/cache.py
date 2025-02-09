@@ -87,6 +87,7 @@ class GlobalFlag:
         self.is_communicating = False
         self.is_app_running = False
         self.finish_init = False
+        self.occupy_user_input = False
 
     @classmethod
     def get_instance(cls):

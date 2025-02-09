@@ -56,10 +56,6 @@ class ChatApp(App):
         width: 60%;
         padding: 1;
     }
-    #tools {
-        width: 20%;
-        border-left: heavy $primary;
-    }
 
     .message-header {
         height: 3;
