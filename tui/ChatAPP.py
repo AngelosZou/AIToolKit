@@ -166,7 +166,7 @@ class ChatApp(App):
                 id="content"
             ),
             VerticalScroll(
-                Button("切换视图", id="toggle-view"),
+                # Button("切换视图", id="toggle-view"),
                 Button("重命名", id="rename"),
                 Button("提示词", id="prompt"),
                 Button("设置", id="settings"),

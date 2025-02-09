@@ -41,7 +41,8 @@ class RenameVertical(Vertical):
         input_box = self.query_one(RenameInput)
         new_name = input_box.value.strip()
         history = History.MAIN_HISTORY
-        history_dir = Path("./history")
+
+        history_dir = Project.instance.root_path / "history"
 
         # 验证输入
         if not new_name:
