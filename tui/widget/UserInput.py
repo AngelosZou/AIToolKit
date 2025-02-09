@@ -1,5 +1,6 @@
 from copy import copy
 
+import pyperclip
 from textual import events
 from textual.widgets import Input, TextArea
 
@@ -18,6 +19,11 @@ class UserInput(TextArea):
         if event.key == "enter":
             event.prevent_default().stop()
             self.insert("\n")
+        if event.key == "ctrl+o":
+            # 获取剪贴板内容粘贴到输入框
+            event.prevent_default().stop()
+            clipboard_text = pyperclip.paste()
+            self.insert(clipboard_text)
         if event.key == "ctrl+l":
             if Project.instance is None:
                 self.notify("请选择一个项目或创建一个项目来开始对话")

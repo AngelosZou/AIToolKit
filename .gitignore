@@ -1,17 +1,9 @@
 __pycache__/
-code_space/*
-ref_space/*
-history/*
 projects/*
 
 .idea/
-
-conversation.md
 
 *.pdf
 *.md
 *.csv
 *.json
-
-test.py
-testapp.py

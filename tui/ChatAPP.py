@@ -144,7 +144,7 @@ class ChatApp(App):
             CombinedSidebar(),
             VerticalScroll(
                 MessageDisplay(id="messages"),
-                UserInput(id="chat-input", classes="chat-input", tab_behavior='indent',tooltip="enter: 换行\nctrl+l: 提交\n\\help 查看指令"),
+                UserInput(id="chat-input", classes="chat-input", tab_behavior='indent',tooltip="enter: 换行\nctrl+o: 粘贴\nctrl+l: 提交\n\\help 查看指令"),
                 id="content"
             ),
             VerticalScroll(
