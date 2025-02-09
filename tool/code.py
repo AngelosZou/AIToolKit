@@ -214,5 +214,127 @@ class TestCommand(BaseTool):
             model_output.append(f"Test failed: {str(e)}")
 
 
+@ToolRegistry.register('edit')
+class EditCommand(BaseTool):
+
+    @classmethod
+    def parse(cls, content: str) -> List[Tuple[str, Any]]:
+        """
+        从给定的字符串中解析所有插入和删除的修改指令，并整合到一个工具中返回。
+
+        指令格式：
+          <insert path="文件路径" line=行号>
+              插入的代码
+          </insert>
+
+          <delete path="文件路径" line=(起始行,结束行)>
+
+        返回一个列表，其中包含一个元组，格式为:
+            ("modify", { 文件路径: {"insert": [(行号, 代码), ...],
+                                      "delete": [(起始行, 结束行), ...] },
+                          ... })
+        """
+        modifications = {}
+
+        # 解析insert标签：允许标签中有多行内容
+        insert_pattern = re.compile(
+            r'<insert\s+path="([^"]+)"\s+line=([0-9]+)\s*>\n?([\s\S]*?)\s*</insert>',
+            re.DOTALL
+        )
+
+        # 解析delete标签：删除标签只包含属性，无内部内容
+        delete_pattern = re.compile(
+            r'<delete\s+path="([^"]+)"\s+line=\(\s*(\d+)\s*,\s*(\d+)\s*\)\s*>'
+        )
+
+
+        # 处理所有insert指令
+        for m in insert_pattern.finditer(content):
+            file_path = m.group(1).strip()
+            line_num = int(m.group(2))
+            code = m.group(3)
+            if file_path not in modifications:
+                modifications[file_path] = {"insert": [], "delete": []}
+            modifications[file_path]["insert"].append((line_num, code))
+
+        # 处理所有delete指令
+        for m in delete_pattern.finditer(content):
+            file_path = m.group(1).strip()
+            start_line = int(m.group(2))
+            end_line = int(m.group(3))
+            if file_path not in modifications:
+                modifications[file_path] = {"insert": [], "delete": []}
+            modifications[file_path]["delete"].append((start_line, end_line))
+
+        return [("edit", (file_path, modifications[file_path])) for file_path in modifications]
+
+    def execute(self, user_output, model_output, args):
+        try:
+            filename, modifications = args
+            filename: str
+            modifications: dict[str, list[tuple[int, int|str]]]
+
+
+
+            if '/' in filename or '\\' in filename:
+                raise ValueError("文件名不能包含路径")
+
+            file_path = code_space() / filename
+
+            if not file_path.exists() or file_path.suffix != ".py":
+                raise ValueError("无效的Python文件路径")
+
+            self.modify_py_file(file_path, modifications)
+
+            user_output.append(f"\n 已修改文件: {filename}")
+            model_output.append(f"File written: {filename}")
+        except Exception as e:
+            user_output.append(f"\n⚠ 写入失败: {str(e)}")
+            model_output.append(f"Write failed: {str(e)}")
+
+    @staticmethod
+    def modify_py_file(file_path: Path, modifications: dict[str, list[tuple[int, int|str]]]):
+        """
+        Modify a Python file by inserting or removing lines at specific line numbers.
+
+        :param file_path: Path object pointing to the .py file.
+        :param modifications: A list of tuples where the first element is the line number,
+                              and the second element is the new content (None to remove the line).
+        """
+        if not file_path.exists() or not file_path.suffix == ".py":
+            raise ValueError("Invalid Python file path")
+
+        with file_path.open("r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        insertion = modifications.get("insert", [])
+        deletion = modifications.get("delete", [])
+
+        # 统计所有删除的行号
+        delete_lines = set()
+        for start, end in deletion:
+            delete_lines.update(range(start, end + 1))
+
+        insert_dict = {line_num: code for line_num, code in insertion}
+
+
+        new_lines = []
+        for i, line in enumerate(lines, start=1):
+            if i in insert_dict:
+                new_lines.append(insert_dict[i] + "\n")
+            if i in delete_lines:
+                continue
+            new_lines.append(line)
+
+        # 处理末尾
+        if len(lines)+1 in insert_dict:
+            new_lines.append("\n" + insert_dict[len(lines)+1] + "\n")
+
+
+        with file_path.open("w", encoding="utf-8") as f:
+            f.writelines(new_lines)
+
+
+
 def code_space():
     return Project.instance.root_path / "code_space"

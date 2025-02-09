@@ -41,7 +41,7 @@ def read_file_content(filepath: str) -> str:
     elif suffix == '.json':
         return json_to_text(path)
     elif suffix == '.py':
-        return f"Python代码文件内容:\n```python\n{path.read_text(encoding='utf-8')}\n```"
+        return f"带行号的Python代码文件内容:\n```python\n{read_python_code(path)}\n```"
     elif suffix == '.pdf':
         return pdf_to_text(path)
     elif suffix in ('.docx', '.doc'):
@@ -52,6 +52,13 @@ def read_file_content(filepath: str) -> str:
         return excel_to_text(path)
     else:
         raise ValueError(f"不支持的文件格式: {suffix}")
+
+def read_python_code(filepath: Path) -> str:
+    """读取Python代码文件内容，为每行添加行号"""
+    with filepath.open("r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    return "".join(f"{i+1:4d}: {line}" for i, line in enumerate(lines))
 
 
 def csv_to_text(filepath: Path) -> str:
