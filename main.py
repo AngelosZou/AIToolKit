@@ -248,4 +248,6 @@ def reload_tool(history, info=True):
                 sio_print(msg)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    from tui.ChatAPP import ChatApp
+    app = ChatApp()
+    app.run()

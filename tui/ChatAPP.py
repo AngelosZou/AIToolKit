@@ -2,27 +2,24 @@ import asyncio
 from pathlib import Path
 from typing import List
 
-from IPython import start_kernel
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, VerticalScroll, Vertical
+from textual.containers import Horizontal, VerticalScroll
 from textual.widgets import (
     Tree,
     Button
 )
 
-import main
 from core.SurrogateIO import sio_print
-from core.sync.Kernel import MainKernel
-from tui.message import MsgType, ChatMessage, MessageDisplay
 from core.cache import GlobalFlag
 from core.history import History
+from core.sync.Kernel import MainKernel
 from core.sync.StateManager import StateManager, State
+from tui.message import MsgType, ChatMessage, MessageDisplay
+from tui.screen.RenameScreen import RenameScreen
 from tui.screen.SettingsScreen import SettingsScreen
 from tui.screen.ToolScreen import ToolScreen
 from tui.widget.CombinedSidebar import CombinedSidebar
-from tui.widget.RenameInput import RenameVertical, RenameInput
-from tui.widget.SettingsForm import SettingsForm
 from tui.widget.prompt import PromptManager
 from .widget.UserInput import UserInput
 
@@ -218,15 +215,17 @@ class ChatApp(App):
             self.notify("只能在输入阶段重命名")
             return
 
-        # 创建输入组件
-        tools = self.query_one("#tools")
-        if tools.query("#rename-container"):
-            # 关掉
-            tools.query_one("#rename-container").remove()
-            return  # 防止重复添加
-        input_container = RenameVertical()
-        tools.mount(input_container)
-        self.query_one(RenameVertical).focus()
+        self.push_screen(RenameScreen())
+
+        # # 创建输入组件
+        # tools = self.query_one("#tools")
+        # if tools.query("#rename-container"):
+        #     # 关掉
+        #     tools.query_one("#rename-container").remove()
+        #     return  # 防止重复添加
+        # input_container = RenameVertical()
+        # tools.mount(input_container)
+        # self.query_one(RenameVertical).focus()
 
     @on(Button.Pressed, "#settings")
     def show_settings(self, event: Button.Pressed):
