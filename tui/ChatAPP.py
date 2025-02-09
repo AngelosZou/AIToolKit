@@ -19,6 +19,7 @@ from core.cache import GlobalFlag
 from core.history import History
 from core.sync.StateManager import StateManager, State
 from tui.screen.SettingsScreen import SettingsScreen
+from tui.screen.ToolScreen import ToolScreen
 from tui.widget.CombinedSidebar import CombinedSidebar
 from tui.widget.RenameInput import RenameVertical, RenameInput
 from tui.widget.SettingsForm import SettingsForm
@@ -173,6 +174,7 @@ class ChatApp(App):
                 Button("重命名", id="rename"),
                 Button("提示词", id="prompt"),
                 Button("设置", id="settings"),
+                Button("工具", id="tools"),
                 Button("退出", id="exit"),
                 id="tools"
             ),
@@ -204,6 +206,14 @@ class ChatApp(App):
     def toggle_view_mode(self):
         self.show_raw = not self.show_raw
         self.query_one(MessageDisplay).show_raw = self.show_raw
+
+    @on(Button.Pressed, "#tools")
+    def handle_tool(self):
+        if StateManager.get_or_create().state != State.WAITING_FOR_INPUT:
+            self.notify("只能在输入阶段修改设置")
+            return
+
+        self.push_screen(ToolScreen())
 
     @on(Button.Pressed, "#rename")
     def handle_rename(self, event: Button.Pressed) -> None:

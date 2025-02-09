@@ -7,11 +7,10 @@ from core.communicate import communicate
 
 
 def process(content: str, send_to_cache: bool = False) -> str:
-    path = Path("./resource/prompt/summarizer.txt")
+    path = Path("./resource/prompt/agent/summarizer.txt")
     prompt = path.read_text(encoding='utf-8')
 
     print("总结子系统启动")
-    # TODO: 为总结添加专用模型
     _, full_response = communicate([{'role': 'user', 'content': prompt + content}])
 
     res = formatter.delete_think(''.join(full_response))

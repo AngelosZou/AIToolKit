@@ -1,0 +1,24 @@
+代码测试工具
+
+语法为 <test>
+
+该工具会使用pytest框架执行 代码空间 中test.py中的所有测试用例。注意事项：
+- 测试文件必须命名为test.py，而非以test开头的文件。
+- 测试用例必须以test_开头
+- 需要先使用代码编写工具创建测试文件
+- 你将会获得返回未通过的测试用例详情（函数名、错误信息）
+- 测试工具会跳过全部用户输入，直到你的修改使所有测试都通过。
+- 你应该对预期的错误使用 @pytest.mark.xfail 装饰器。你需要确保测试没有fail。
+
+使用示例：
+<write path="test.py">
+from .main import add
+
+def test_addition():
+    assert 1+1 == 2
+
+@pytest.mark.xfail
+def test_expect_fail():
+    assert 5-3 == 1
+</write>
+<test>

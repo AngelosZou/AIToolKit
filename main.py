@@ -126,10 +126,11 @@ async def main():
             GlobalFlag.get_instance().skip_user_input = False
 
             # ------------------------------
-            # 重新加载提示词、文件、代码
+            # 重新加载提示词、文件、代码、工具
             reload_prompt(history, info=False)
             reload_file(history, info=False)
             reload_code(history, info=False)
+            reload_tool(history, info=False)
 
             # ------------------------------
             # 调用AI
@@ -222,6 +223,30 @@ def reload_code(history, info=True):
             if info:
                 sio_print(msg)
 
+def reload_tool(history, info=True):
+    if info:
+        try_create_message(MsgType.SYSTEM)
+        sio_print(f"\n清空AI代码记忆")
+    history.history = [msg for msg in history.history if "tool" not in msg.tags]
+
+    file_count = 0
+    if Path("./resource/prompt/tool").exists():
+        for file in Path("./resource/prompt/tool").iterdir():
+            if file.is_file() and file.suffix == ".txt":
+                try:
+                    history.add_message_head(MessageRole.SYSTEM, f"加载*工具*信息{file.stem}"+read_file_content(file), "", tags=["tool"])
+                except ValueError as e:
+                    if info:
+                        sio_print(f"读取工具{file}失败，已跳过: {e}")
+                    continue
+        if file_count != 0:
+            msg = f"加载了{file_count}个启用的AI工具"
+            if info:
+                sio_print(msg)
+        else:
+            msg = f"没有启用任何工具"
+            if info:
+                sio_print(msg)
 
 if __name__ == "__main__":
     asyncio.run(main())
