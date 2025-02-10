@@ -23,6 +23,12 @@ class SourceOpenAI(BaseSource):
 
     @classmethod
     def create_stream(cls, message: list[dict]) -> Any:
+        # 把所有system都换成user
+        for i in range(len(message)):
+            if message[i]['role'] == 'system':
+                message[i]['role'] = 'user'
+                message[i]['content'] = "[系统消息] !该内容由系统根据流程生成! "+message[i]['content'] + "[系统消息结束]"
+                message[i]['system'] = True
         configure = Configure.get_instance()
         api = configure.openai_api_key
         url = "https://api.openai.com/v1"

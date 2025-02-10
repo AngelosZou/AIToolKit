@@ -106,111 +106,144 @@ class TestCommand(BaseTool):
         try:
             test_file = code_space() / "test.py"
 
-            # 验证测试文件存在
             if not test_file.exists():
                 raise FileNotFoundError("测试文件test.py不存在")
 
-            # 使用绝对路径执行pytest
             result = subprocess.run(
-                ["pytest", str(test_file.absolute())],
+                ["pytest", str(test_file.absolute()), "-vs"],
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
-                cwd=str(code_space().absolute())
             )
 
-            try:
-                # 使用多阶段解析策略
-                failed_tests = []
-                current_failure = {}
-                error_phase = None  # 标记当前解析阶段：header/details
+            full_report = result.stdout.split('\n')
+            failed_tests = []
+            current_test = None
+            parse_phase = None  # 'summary' or 'details'
 
-                # 定义更全面的正则表达式
-                failure_header_pattern = re.compile(
-                    r'^FAILED .+?::(test_\w+) ?- ?(.+?)(:|$)'
-                )
-                error_header_pattern = re.compile(
-                    r'^ERROR .+?::(test_\w+) ?- ?(.+?)(:|$)'
-                )
-                assertion_pattern = re.compile(r'^>?\s*assert (.+)$')
-                error_type_pattern = re.compile(r'^(E\s+)?(\w+):?\s*(.*)$')
+            # 改进的正则表达式集合
+            patterns = {
+                'test_header': re.compile(r'^_+ ([^_]+) _+$'),
+                'summary_failure': re.compile(
+                    r'^FAILED (\S+?)::(\w+)(?: - (.*))?$'),
+                'summary_error': re.compile(
+                    r'^ERROR (\S+?)::(\w+)(?: - (.*))?$'),
+                'assertion_line': re.compile(r'^>?\s+(?:E\s+)?assert (.+)$'),
+                'error_header': re.compile(r'^(E\s+)?(\w+Error): (.*)$'),
+                'error_location': re.compile(r'^(\S+?):(\d+)(?: in \w+)?$'),
+            }
 
-                for line in result.stdout.split('\n'):
-                    # 阶段1：匹配失败头部信息
-                    if header_match := failure_header_pattern.match(line):
-                        current_failure = {
-                            'name': header_match.group(1),
-                            'error_type': 'AssertionError',
-                            'message': header_match.group(2).strip(),
-                            'details': []
+            for line in full_report:
+                try:
+                    # 解析详细错误块的头部
+                    if match := patterns['test_header'].match(line):
+                        if current_test:
+                            failed_tests.append(current_test)
+                        current_test = {
+                            'name': match.group(1),
+                            'error_type': 'Unknown',
+                            'message': '',
+                            'details': [],
+                            'assertion': None,
+                            'context': [],
+                            'location': ''
                         }
-                        error_phase = 'details'
-                        continue
-                    elif error_match := error_header_pattern.match(line):
-                        current_failure = {
-                            'name': error_match.group(1),
-                            'error_type': 'ExecutionError',
-                            'message': error_match.group(2).strip(),
-                            'details': []
-                        }
-                        error_phase = 'details'
+                        parse_phase = 'details'
                         continue
 
-                    # 阶段2：收集错误详情
-                    if current_failure:
+                    # 解析摘要行的失败/错误信息
+                    if not current_test:
+                        if match := patterns['summary_failure'].match(line):
+                            current_test = {
+                                'name': match.group(2),
+                                'error_type': 'AssertionError',
+                                'message': match.group(3) or '',
+                                'details': [],
+                                'assertion': None,
+                                'context': [],
+                                'location': f"{match.group(1)}"
+                            }
+                            parse_phase = 'summary'
+                        elif match := patterns['summary_error'].match(line):
+                            current_test = {
+                                'name': match.group(2),
+                                'error_type': 'ExecutionError',
+                                'message': match.group(3) or '',
+                                'details': [],
+                                'assertion': None,
+                                'context': [],
+                                'location': f"{match.group(1)}"
+                            }
+                            parse_phase = 'summary'
+
+                    if current_test:
                         # 捕获断言语句
-                        if assertion_match := assertion_pattern.match(line):
-                            current_failure['assertion'] = assertion_match.group(1)
-                        # 捕获错误类型（非断言错误）
-                        elif error_type_match := error_type_pattern.match(line):
-                            current_failure['error_type'] = error_type_match.group(2)
-                            current_failure['message'] = error_type_match.group(3)
-                        # 结束一个错误块的收集
-                        elif line.strip() == '' and error_phase == 'details':
-                            failed_tests.append(current_failure)
-                            current_failure = {}
-                            error_phase = None
-                        # 收集错误详细信息
-                        elif error_phase == 'details':
-                            current_failure['details'].append(line.strip())
-            except Exception as e:
-                user_output.append(f"\n⚠ 测试结果解析错误：{str(e)}")
+                        if match := patterns['assertion_line'].search(line):
+                            current_test['assertion'] = match.group(1)
 
-            # 构建结果输出
+                        # 捕获错误类型和消息
+                        elif match := patterns['error_header'].match(line):
+                            current_test['error_type'] = match.group(2)
+                            current_test['message'] = match.group(3)
+
+                        # 捕获错误位置
+                        elif match := patterns['error_location'].search(line):
+                            current_test['location'] = f"{match.group(1)}:{match.group(2)}"
+
+                        # 收集代码上下文
+                        elif line.strip().startswith('>'):
+                            current_test['context'].append(line.strip())
+
+                        # 结束当前测试的解析
+                        elif parse_phase == 'summary' and not line.strip():
+                            failed_tests.append(current_test)
+                            current_test = None
+
+                        # 收集详细信息
+                        elif parse_phase == 'details':
+                            current_test['details'].append(line.rstrip())
+
+                except Exception as e:
+                    user_output.append(f"解析错误: {str(e)}")
+
+            if current_test:
+                failed_tests.append(current_test)
+
+            # 构建测试报告
             if result.returncode == 0:
                 user_output.append("\n 所有测试通过")
                 model_output.append("All tests passed")
             else:
-                # 在构建报告部分修改为：
-                try:
-                    report = ["\n 未通过测试："]
-                    for idx, test in enumerate(failed_tests, 1):
-                        entry = [
-                            f"{idx}. 测试函数：{test.get('name', '未知函数')}",
-                            f"   错误类型：{test.get('error_type', '未知错误')}",
-                            f"   错误信息：{test.get('message', '无详细信息')}"
-                        ]
+                report = ["\n 未通过测试:"]
+                for idx, test in enumerate(failed_tests, 1):
+                    entry = [
+                        f"{idx}. {test.get('name', '未知测试')}",
+                        f"   类型: {test.get('error_type', '未知错误')}",
+                        f"   位置: {test.get('location', '未知位置')}",
+                        f"   信息: {test.get('message', '无详细信息')}"
+                    ]
 
-                        # 添加断言信息（如果有）
-                        if 'assertion' in test:
-                            entry.append(f"   断言语句：{test['assertion']}")
+                    if assertion := test.get('assertion'):
+                        entry.append(f"   断言失败: {assertion}")
 
-                        # 添加错误详情（最多3行）
-                        if test.get('details'):
-                            entry.append("   错误详情：")
-                            entry.extend([f"      {d}" for d in test['details'][:3]])
+                    if context := test.get('context'):
+                        entry.append("   代码上下文:")
+                        entry.extend([f"     {line}" for line in context[-2:]])
 
-                        report.append("\n".join(entry))
+                    if details := test.get('details'):
+                        entry.append("   错误轨迹:")
+                        entry.extend([f"     {line}" for line in details[-3:]])
 
-                    user_output.append("\n".join(report))
-                except Exception as e:
-                    user_output.append(f"\n⚠ 用户报告构建错误：{str(e)}\n已将完整测试结果提交AI")
-                model_output.append(f"测试失败详情：{result.stdout}")
+                    report.append("\n".join(entry))
+
+                user_output.append("\n".join(report))
+                model_output.append(result.__str__())
+
                 GlobalFlag.get_instance().skip_user_input = True
 
         except Exception as e:
-            error_msg = f"测试执行错误：{str(e)}"
-            user_output.append(f"\n⚠ {error_msg}")
+            error_msg = f"测试执行错误: {str(e)}"
+            user_output.append(f"\n⚠️ {error_msg}")
             model_output.append(f"Test failed: {str(e)}")
 
 
