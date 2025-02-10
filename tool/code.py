@@ -116,7 +116,7 @@ class TestCommand(BaseTool):
                 encoding='utf-8',
             )
 
-            full_report = result.stdout.split('\n')
+            full_report = result.__str__()
             failed_tests = []
             current_test = None
             parse_phase = None  # 'summary' or 'details'
@@ -216,23 +216,26 @@ class TestCommand(BaseTool):
             else:
                 report = ["\n 未通过测试:"]
                 for idx, test in enumerate(failed_tests, 1):
-                    entry = [
-                        f"{idx}. {test.get('name', '未知测试')}",
-                        f"   类型: {test.get('error_type', '未知错误')}",
-                        f"   位置: {test.get('location', '未知位置')}",
-                        f"   信息: {test.get('message', '无详细信息')}"
-                    ]
+                    try:
+                        entry = [
+                            f"{idx}. {test.get('name', '未知测试')}",
+                            f"   类型: {test.get('error_type', '未知错误')}",
+                            f"   位置: {test.get('location', '未知位置')}",
+                            f"   信息: {test.get('message', '无详细信息')}"
+                        ]
 
-                    if assertion := test.get('assertion'):
-                        entry.append(f"   断言失败: {assertion}")
+                        if assertion := test.get('assertion'):
+                            entry.append(f"   断言失败: {assertion}")
 
-                    if context := test.get('context'):
-                        entry.append("   代码上下文:")
-                        entry.extend([f"     {line}" for line in context[-2:]])
+                        if context := test.get('context'):
+                            entry.append("   代码上下文:")
+                            entry.extend([f"     {line}" for line in context[-2:]])
 
-                    if details := test.get('details'):
-                        entry.append("   错误轨迹:")
-                        entry.extend([f"     {line}" for line in details[-3:]])
+                        if details := test.get('details'):
+                            entry.append("   错误轨迹:")
+                            entry.extend([f"     {line}" for line in details[-3:]])
+                    except Exception as e:
+                        entry = [f"解析错误: {str(e)}"]
 
                     report.append("\n".join(entry))
 

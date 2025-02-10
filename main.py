@@ -1,3 +1,5 @@
+import os
+import sys
 from pathlib import Path
 
 from colorama import Fore, Style
@@ -239,6 +241,14 @@ def reload_tool(history, info=True):
 
 if __name__ == "__main__":
     from tui.ChatAPP import ChatApp
+
+    sys.stdin.reconfigure(encoding='utf-8')
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+    try:
+        os.system("chcp 65001")
+    except Exception as e:
+        pass
 
     app = ChatApp()
     app.run()
