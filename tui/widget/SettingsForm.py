@@ -3,6 +3,7 @@ from textual.app import ComposeResult
 from textual.containers import Vertical, Horizontal, Grid, VerticalScroll
 from textual.validation import Number, Length
 from textual.widgets import Select, Input, Label, Button
+from textual.widgets._select import BLANK
 
 from core.cache import Configure
 from core.source.sources import SourceRegistry
@@ -29,7 +30,7 @@ class SettingsForm(VerticalScroll):
             Select(
                 ai_options,
                 prompt="选择AI源",
-                value=config.active_ai,
+                value=config.active_ai if config.active_ai else BLANK,
                 id="ai-source"
             ),
             classes="setting-item"

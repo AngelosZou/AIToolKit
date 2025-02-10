@@ -1,0 +1,11 @@
+beautifulsoup4
+colorama
+docx
+google_api_python_client
+lxml
+pandas
+PyPDF2
+pyperclip
+pytest
+Requests
+textual

@@ -32,7 +32,7 @@ class Configure:
 def load_cache() -> Configure:
     """从文件加载缓存数据"""
     try:
-        with open("cache.json", "r", encoding="utf-8") as f:
+        with open("configure.json", "r", encoding="utf-8") as f:
             cache_data = json.load(f)
             return Configure(**cache_data)
     except Exception:
@@ -42,7 +42,7 @@ def load_cache() -> Configure:
 
 def save_cache(cache_data: Configure):
     """保存缓存数据到文件"""
-    with open("cache.json", "w", encoding="utf-8") as f:
+    with open("configure.json", "w", encoding="utf-8") as f:
         json.dump(cache_data.__dict__, f, ensure_ascii=False, indent=2)
 
 
